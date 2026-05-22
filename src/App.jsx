@@ -1,46 +1,16 @@
 import { useEffect, useState } from "react"
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://jobpilot-backend-mcv7.onrender.com"
 
-const emptyProject = {
-  name: "",
-  description: "",
-  tech: "",
-  link: "",
-}
+console.log("JOBPILOT API URL:", API_URL)
 
-const emptyEducation = {
-  degree: "",
-  college: "",
-  branch: "",
-  year: "",
-  score: "",
-}
-
-const emptyExperience = {
-  type: "Fresher",
-  company: "",
-  role: "",
-  duration: "",
-  description: "",
-}
-
-const emptyCertification = {
-  name: "",
-  issuer: "",
-  year: "",
-  link: "",
-}
-
-const emptyAchievement = {
-  title: "",
-  description: "",
-}
-
-const emptyLanguage = {
-  name: "",
-  level: "",
-}
+const emptyProject = { name: "", description: "", tech: "", link: "" }
+const emptyEducation = { degree: "", college: "", branch: "", year: "", score: "" }
+const emptyExperience = { type: "Fresher", company: "", role: "", duration: "", description: "" }
+const emptyCertification = { name: "", issuer: "", year: "", link: "" }
+const emptyAchievement = { title: "", description: "" }
+const emptyLanguage = { name: "", level: "" }
 
 const defaultProfile = {
   name: "Mohammad Haseeb",
@@ -174,25 +144,16 @@ function normalizeProfile(savedProfile) {
     certifications:
       Array.isArray(old.certifications) && old.certifications.length > 0
         ? old.certifications
-        : old.certifications
-        ? [{ name: old.certifications, issuer: "", year: "", link: "" }]
         : [],
 
     achievements:
       Array.isArray(old.achievements) && old.achievements.length > 0
         ? old.achievements
-        : old.achievements
-        ? [{ title: old.achievements, description: "" }]
         : [],
 
     languages:
       Array.isArray(old.languages) && old.languages.length > 0
         ? old.languages
-        : typeof old.languages === "string"
-        ? old.languages
-            .split(",")
-            .map((lang) => ({ name: lang.trim(), level: "" }))
-            .filter((lang) => lang.name)
         : defaultProfile.languages,
   }
 }
@@ -283,7 +244,7 @@ function App() {
   const addArrayItem = (section, emptyItem) => {
     setProfile((prev) => ({
       ...prev,
-      [section]: [...prev[section], emptyItem],
+      [section]: [...prev[section], { ...emptyItem }],
     }))
   }
 
@@ -293,6 +254,8 @@ function App() {
       [section]: prev[section].filter((_, i) => i !== index),
     }))
   }
+
+  const isFilled = (value) => value && String(value).trim().length > 3
 
   const projectsText = profile.projects
     .filter((project) => project.name || project.description)
@@ -356,6 +319,31 @@ Description: ${exp.description}`
     achievementsText: achievementText,
     languagesText: languageText,
   }
+
+  const sectionStatus = {
+    personal:
+      isFilled(profile.name) &&
+      isFilled(profile.role) &&
+      isFilled(profile.email) &&
+      isFilled(profile.phone),
+    summary: isFilled(profile.summary),
+    skills: isFilled(profile.technicalSkills),
+    education: profile.educations.some(
+      (edu) => isFilled(edu.degree) && isFilled(edu.college)
+    ),
+    projects: profile.projects.some(
+      (project) => isFilled(project.name) && isFilled(project.description)
+    ),
+    experience: profile.experiences.some((exp) => isFilled(exp.description)),
+    certifications: profile.certifications.length > 0,
+    achievements: profile.achievements.length > 0,
+    languages: profile.languages.some((lang) => isFilled(lang.name)),
+    preferences: isFilled(profile.resumeStyle) && isFilled(profile.preferredLocation),
+  }
+
+  const completedSections = Object.values(sectionStatus).filter(Boolean).length
+  const totalSections = Object.keys(sectionStatus).length
+  const profileScore = Math.round((completedSections / totalSections) * 100)
 
   const calculateMatch = (job) => {
     const skills = profile.technicalSkills
@@ -544,7 +532,16 @@ ${profile.phone}`,
         }),
       })
 
-      const data = await res.json()
+      const text = await res.text()
+
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch {
+        throw new Error(
+          `Backend returned non-JSON response. API URL used: ${API_URL}`
+        )
+      }
 
       if (!res.ok || !data.success) {
         throw new Error(data.reply || data.error || "AI agent failed")
@@ -558,7 +555,7 @@ ${profile.phone}`,
         ...prev,
         {
           role: "ai",
-          text: `Sorry, AI failed: ${error.message}. Please check Render backend logs.`,
+          text: `Sorry, AI failed: ${error.message}`,
         },
       ])
     } finally {
@@ -712,29 +709,6 @@ ${profile.phone}`,
       },
     ])
   }
-
-  const isFilled = (value) => value && String(value).trim().length > 3
-
-  const sectionStatus = {
-    personal:
-      isFilled(profile.name) &&
-      isFilled(profile.role) &&
-      isFilled(profile.email) &&
-      isFilled(profile.phone),
-    summary: isFilled(profile.summary),
-    skills: isFilled(profile.technicalSkills),
-    education: profile.educations.some((edu) => isFilled(edu.degree) && isFilled(edu.college)),
-    projects: profile.projects.some((project) => isFilled(project.name) && isFilled(project.description)),
-    experience: profile.experiences.some((exp) => isFilled(exp.description)),
-    certifications: profile.certifications.length > 0,
-    achievements: profile.achievements.length > 0,
-    languages: profile.languages.some((lang) => isFilled(lang.name)),
-    preferences: isFilled(profile.resumeStyle) && isFilled(profile.preferredLocation),
-  }
-
-  const completedSections = Object.values(sectionStatus).filter(Boolean).length
-  const totalSections = Object.keys(sectionStatus).length
-  const profileScore = Math.round((completedSections / totalSections) * 100)
 
   const AccordionCard = ({ id, title, description, count, children }) => {
     const isOpen = openProfileSection === id
@@ -944,17 +918,6 @@ ${profile.phone}`,
               </button>
 
               <button
-                onClick={() =>
-                  quickAskAgent(
-                    "Suggest 5 impressive projects I can build to improve my chances for my target role. Make them realistic and portfolio-worthy."
-                  )
-                }
-                className="w-full bg-white/10 hover:bg-white/20 py-3 px-4 rounded-xl text-left font-semibold"
-              >
-                Project Ideas
-              </button>
-
-              <button
                 onClick={clearAiChat}
                 className="w-full bg-red-500/20 hover:bg-red-500/30 py-3 px-4 rounded-xl text-left font-semibold text-red-200"
               >
@@ -998,7 +961,7 @@ ${profile.phone}`,
                     askAgent(aiInput)
                   }
                 }}
-                placeholder="Ask JobPilot AI: Generate my resume, improve my skills, prepare interview answers..."
+                placeholder="Ask JobPilot AI..."
                 rows="3"
                 className="bg-black/30 border border-white/10 rounded-2xl p-4 outline-none resize-none"
               />
@@ -1178,35 +1141,11 @@ ${profile.phone}`,
               >
                 Open Job Page
               </button>
-
-              <button
-                onClick={() =>
-                  quickAskAgent(
-                    "Generate a short professional application email for the selected job using my full candidate profile. Make it human, clean, and not repetitive."
-                  )
-                }
-                className="w-full mt-3 bg-purple-600 hover:bg-purple-700 py-3 rounded-xl"
-              >
-                Ask AI for This Job
-              </button>
             </div>
 
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-2xl font-bold">Email Draft</h3>
-                  <button
-                    onClick={() =>
-                      copyToClipboard(
-                        `Subject: ${emailDraft.subject}\n\n${emailDraft.body}`,
-                        "email"
-                      )
-                    }
-                    className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm"
-                  >
-                    {copied === "email" ? "Copied ✅" : "Copy Email"}
-                  </button>
-                </div>
+                <h3 className="text-2xl font-bold mb-4">Email Draft</h3>
 
                 <label className="text-gray-400 text-sm">Recipient Email</label>
                 <input
@@ -1428,8 +1367,7 @@ ${profile.phone}`,
           </p>
           <h2 className="text-5xl font-bold mb-4">Complete Your Profile</h2>
           <p className="text-gray-400 text-lg">
-            A clean resume builder form. Open only the section you need, add multiple
-            projects or experiences, and let AI generate professional results.
+            Open one section at a time, add multiple projects or experiences, and let AI generate professional results.
           </p>
         </div>
 
@@ -1550,7 +1488,6 @@ ${profile.phone}`,
                 onChange={(e) => updateProfile("summary", e.target.value)}
                 rows="5"
                 className={textareaClass}
-                placeholder="Write a short professional summary..."
               />
             </AccordionCard>
 
@@ -1602,14 +1539,9 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.educations.map((edu, index) => (
-                  <div
-                    key={index}
-                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
-                  >
+                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">
-                        Education {index + 1}
-                      </h4>
+                      <h4 className="text-xl font-semibold">Education {index + 1}</h4>
                       {profile.educations.length > 1 && (
                         <button
                           onClick={() => removeArrayItem("educations", index)}
@@ -1633,12 +1565,7 @@ ${profile.phone}`,
                           <input
                             value={edu[field]}
                             onChange={(e) =>
-                              updateArrayItem(
-                                "educations",
-                                index,
-                                field,
-                                e.target.value
-                              )
+                              updateArrayItem("educations", index, field, e.target.value)
                             }
                             className={inputClass}
                           />
@@ -1649,7 +1576,7 @@ ${profile.phone}`,
                 ))}
 
                 <button
-                  onClick={() => addArrayItem("educations", { ...emptyEducation })}
+                  onClick={() => addArrayItem("educations", emptyEducation)}
                   className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
                 >
                   + Add Education
@@ -1665,14 +1592,9 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.projects.map((project, index) => (
-                  <div
-                    key={index}
-                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
-                  >
+                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">
-                        Project {index + 1}
-                      </h4>
+                      <h4 className="text-xl font-semibold">Project {index + 1}</h4>
                       {profile.projects.length > 1 && (
                         <button
                           onClick={() => removeArrayItem("projects", index)}
@@ -1689,12 +1611,7 @@ ${profile.phone}`,
                         <input
                           value={project.name}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "projects",
-                              index,
-                              "name",
-                              e.target.value
-                            )
+                            updateArrayItem("projects", index, "name", e.target.value)
                           }
                           className={inputClass}
                         />
@@ -1705,12 +1622,7 @@ ${profile.phone}`,
                         <input
                           value={project.link}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "projects",
-                              index,
-                              "link",
-                              e.target.value
-                            )
+                            updateArrayItem("projects", index, "link", e.target.value)
                           }
                           className={inputClass}
                         />
@@ -1721,12 +1633,7 @@ ${profile.phone}`,
                         <textarea
                           value={project.tech}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "projects",
-                              index,
-                              "tech",
-                              e.target.value
-                            )
+                            updateArrayItem("projects", index, "tech", e.target.value)
                           }
                           rows="4"
                           className={textareaClass}
@@ -1738,12 +1645,7 @@ ${profile.phone}`,
                         <textarea
                           value={project.description}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "projects",
-                              index,
-                              "description",
-                              e.target.value
-                            )
+                            updateArrayItem("projects", index, "description", e.target.value)
                           }
                           rows="4"
                           className={textareaClass}
@@ -1754,7 +1656,7 @@ ${profile.phone}`,
                 ))}
 
                 <button
-                  onClick={() => addArrayItem("projects", { ...emptyProject })}
+                  onClick={() => addArrayItem("projects", emptyProject)}
                   className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
                 >
                   + Add Project
@@ -1770,14 +1672,9 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.experiences.map((exp, index) => (
-                  <div
-                    key={index}
-                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
-                  >
+                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">
-                        Experience {index + 1}
-                      </h4>
+                      <h4 className="text-xl font-semibold">Experience {index + 1}</h4>
                       {profile.experiences.length > 1 && (
                         <button
                           onClick={() => removeArrayItem("experiences", index)}
@@ -1794,12 +1691,7 @@ ${profile.phone}`,
                         <select
                           value={exp.type}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "experiences",
-                              index,
-                              "type",
-                              e.target.value
-                            )
+                            updateArrayItem("experiences", index, "type", e.target.value)
                           }
                           className={inputClass}
                         >
@@ -1820,12 +1712,7 @@ ${profile.phone}`,
                           <input
                             value={exp[field]}
                             onChange={(e) =>
-                              updateArrayItem(
-                                "experiences",
-                                index,
-                                field,
-                                e.target.value
-                              )
+                              updateArrayItem("experiences", index, field, e.target.value)
                             }
                             className={inputClass}
                           />
@@ -1837,12 +1724,7 @@ ${profile.phone}`,
                         <textarea
                           value={exp.description}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "experiences",
-                              index,
-                              "description",
-                              e.target.value
-                            )
+                            updateArrayItem("experiences", index, "description", e.target.value)
                           }
                           rows="5"
                           className={textareaClass}
@@ -1853,7 +1735,7 @@ ${profile.phone}`,
                 ))}
 
                 <button
-                  onClick={() => addArrayItem("experiences", { ...emptyExperience })}
+                  onClick={() => addArrayItem("experiences", emptyExperience)}
                   className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
                 >
                   + Add Experience
@@ -1869,14 +1751,9 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.certifications.map((cert, index) => (
-                  <div
-                    key={index}
-                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
-                  >
+                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">
-                        Certification {index + 1}
-                      </h4>
+                      <h4 className="text-xl font-semibold">Certification {index + 1}</h4>
                       <button
                         onClick={() => removeArrayItem("certifications", index)}
                         className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
@@ -1897,12 +1774,7 @@ ${profile.phone}`,
                           <input
                             value={cert[field]}
                             onChange={(e) =>
-                              updateArrayItem(
-                                "certifications",
-                                index,
-                                field,
-                                e.target.value
-                              )
+                              updateArrayItem("certifications", index, field, e.target.value)
                             }
                             className={inputClass}
                           />
@@ -1913,9 +1785,7 @@ ${profile.phone}`,
                 ))}
 
                 <button
-                  onClick={() =>
-                    addArrayItem("certifications", { ...emptyCertification })
-                  }
+                  onClick={() => addArrayItem("certifications", emptyCertification)}
                   className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
                 >
                   + Add Certification
@@ -1931,14 +1801,9 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.achievements.map((achievement, index) => (
-                  <div
-                    key={index}
-                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
-                  >
+                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">
-                        Achievement {index + 1}
-                      </h4>
+                      <h4 className="text-xl font-semibold">Achievement {index + 1}</h4>
                       <button
                         onClick={() => removeArrayItem("achievements", index)}
                         className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
@@ -1953,12 +1818,7 @@ ${profile.phone}`,
                         <input
                           value={achievement.title}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "achievements",
-                              index,
-                              "title",
-                              e.target.value
-                            )
+                            updateArrayItem("achievements", index, "title", e.target.value)
                           }
                           className={inputClass}
                         />
@@ -1969,12 +1829,7 @@ ${profile.phone}`,
                         <textarea
                           value={achievement.description}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "achievements",
-                              index,
-                              "description",
-                              e.target.value
-                            )
+                            updateArrayItem("achievements", index, "description", e.target.value)
                           }
                           rows="4"
                           className={textareaClass}
@@ -1985,9 +1840,7 @@ ${profile.phone}`,
                 ))}
 
                 <button
-                  onClick={() =>
-                    addArrayItem("achievements", { ...emptyAchievement })
-                  }
+                  onClick={() => addArrayItem("achievements", emptyAchievement)}
                   className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
                 >
                   + Add Achievement
@@ -2003,14 +1856,9 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.languages.map((language, index) => (
-                  <div
-                    key={index}
-                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
-                  >
+                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">
-                        Language {index + 1}
-                      </h4>
+                      <h4 className="text-xl font-semibold">Language {index + 1}</h4>
                       {profile.languages.length > 1 && (
                         <button
                           onClick={() => removeArrayItem("languages", index)}
@@ -2027,12 +1875,7 @@ ${profile.phone}`,
                         <input
                           value={language.name}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "languages",
-                              index,
-                              "name",
-                              e.target.value
-                            )
+                            updateArrayItem("languages", index, "name", e.target.value)
                           }
                           className={inputClass}
                         />
@@ -2043,12 +1886,7 @@ ${profile.phone}`,
                         <input
                           value={language.level}
                           onChange={(e) =>
-                            updateArrayItem(
-                              "languages",
-                              index,
-                              "level",
-                              e.target.value
-                            )
+                            updateArrayItem("languages", index, "level", e.target.value)
                           }
                           placeholder="Native / Good / Fluent"
                           className={inputClass}
@@ -2059,7 +1897,7 @@ ${profile.phone}`,
                 ))}
 
                 <button
-                  onClick={() => addArrayItem("languages", { ...emptyLanguage })}
+                  onClick={() => addArrayItem("languages", emptyLanguage)}
                   className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
                 >
                   + Add Language
