@@ -15,9 +15,9 @@ const salaryRanges = [
 
 const resumeTemplates = [
   {
-    id: "ats-blue",
-    name: "ATS Blue Line",
-    description: "Clean ATS-friendly resume",
+    id: "classic-photo",
+    name: "Classic Photo Header",
+    description: "Clean corporate resume like your sample",
   },
   {
     id: "modern-sidebar",
@@ -202,7 +202,7 @@ function markdownToProfessionalHtml(text) {
   return safe
 }
 
-function getProfessionalDocumentHtml(text, profile, template = "ats-blue") {
+function getProfessionalDocumentHtml(text, profile, template = "classic-photo") {
   const title = getDocumentTitle(text, profile)
   const body = markdownToProfessionalHtml(text)
 
@@ -216,6 +216,13 @@ function getProfessionalDocumentHtml(text, profile, template = "ats-blue") {
     .filter(Boolean)
     .join(" | ")
 
+  const initials = String(profile?.name || "C")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+
   if (template === "modern-sidebar") {
     return `
 <!DOCTYPE html>
@@ -224,20 +231,20 @@ function getProfessionalDocumentHtml(text, profile, template = "ats-blue") {
   <meta charset="UTF-8" />
   <title>${escapeHtml(title)}</title>
   <style>
-    body { margin:0; background:#e5e7eb; font-family:Arial, Helvetica, sans-serif; color:#1f2937; }
-    .page { max-width:900px; margin:24px auto; background:white; display:grid; grid-template-columns:245px 1fr; min-height:1080px; box-shadow:0 18px 45px rgba(0,0,0,0.12); }
-    .hero { grid-column:1 / 3; background:#334155; color:white; padding:32px 42px; }
-    .hero h1 { margin:0; font-size:32px; letter-spacing:2px; text-transform:uppercase; }
-    .hero p { margin:6px 0 0; font-size:15px; text-transform:uppercase; }
-    .sidebar { background:#e5e7eb; padding:34px 24px; border-right:1px solid #cbd5e1; }
-    .main { padding:34px 42px; }
-    h2 { color:#334155; font-size:15px; margin-top:22px; margin-bottom:10px; letter-spacing:3px; text-transform:uppercase; border-bottom:2px solid #64748b; padding-bottom:6px; }
-    h3 { font-size:14px; margin-top:15px; color:#111827; }
-    p, li { font-size:12.8px; line-height:1.58; }
-    li { margin-left:17px; }
-    .contact-item { font-size:12px; line-height:1.6; margin-bottom:7px; word-break:break-word; }
-    strong { color:#111827; }
-    @media print { body { background:white; } .page { margin:0; max-width:none; box-shadow:none; } }
+    body{margin:0;background:#e5e7eb;font-family:Arial,Helvetica,sans-serif;color:#1f2937}
+    .page{max-width:900px;margin:24px auto;background:white;display:grid;grid-template-columns:245px 1fr;min-height:1080px;box-shadow:0 18px 45px rgba(0,0,0,.12)}
+    .hero{grid-column:1/3;background:#334155;color:white;padding:32px 42px}
+    .hero h1{margin:0;font-size:32px;letter-spacing:2px;text-transform:uppercase}
+    .hero p{margin:6px 0 0;font-size:15px;text-transform:uppercase}
+    .sidebar{background:#e5e7eb;padding:34px 24px;border-right:1px solid #cbd5e1}
+    .main{padding:34px 42px}
+    h2{color:#334155;font-size:15px;margin-top:22px;margin-bottom:10px;letter-spacing:3px;text-transform:uppercase;border-bottom:2px solid #64748b;padding-bottom:6px}
+    h3{font-size:14px;margin-top:15px;color:#111827}
+    p,li{font-size:12.8px;line-height:1.58}
+    li{margin-left:17px}
+    .contact-item{font-size:12px;line-height:1.6;margin-bottom:7px;word-break:break-word}
+    strong{color:#111827}
+    @media print{body{background:white}.page{margin:0;max-width:none;box-shadow:none}.no-print{display:none!important}}
   </style>
 </head>
 <body>
@@ -246,7 +253,6 @@ function getProfessionalDocumentHtml(text, profile, template = "ats-blue") {
       <h1>${escapeHtml(profile?.name || "Candidate Name")}</h1>
       <p>${escapeHtml(profile?.role || "Target Role")}</p>
     </div>
-
     <aside class="sidebar">
       <h2>Contact</h2>
       <div class="contact-item">${escapeHtml(profile?.email || "Email not provided")}</div>
@@ -270,7 +276,6 @@ function getProfessionalDocumentHtml(text, profile, template = "ats-blue") {
           : "Not provided"
       )}</p>
     </aside>
-
     <main class="main">
       <p>${body}</p>
     </main>
@@ -287,19 +292,19 @@ function getProfessionalDocumentHtml(text, profile, template = "ats-blue") {
   <meta charset="UTF-8" />
   <title>${escapeHtml(title)}</title>
   <style>
-    body { margin:0; background:#f8fafc; font-family:Georgia, "Times New Roman", serif; color:#222; }
-    .page { max-width:860px; margin:24px auto; background:white; padding:48px 58px; border-radius:12px; box-shadow:0 18px 45px rgba(0,0,0,0.1); }
-    .name { font-family:Arial, Helvetica, sans-serif; font-size:31px; letter-spacing:5px; text-transform:uppercase; font-weight:800; margin-bottom:6px; }
-    .role { font-family:Arial, Helvetica, sans-serif; letter-spacing:3px; color:#6b7280; text-transform:uppercase; margin-bottom:20px; }
-    .line { height:3px; background:#222; margin-bottom:22px; }
-    .contact { font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#4b5563; margin-bottom:22px; line-height:1.5; }
-    h1 { display:none; }
-    h2 { font-family:Arial, Helvetica, sans-serif; font-size:15px; letter-spacing:4px; text-transform:uppercase; margin-top:22px; margin-bottom:9px; color:#333; }
-    h3 { font-family:Arial, Helvetica, sans-serif; font-size:14px; margin-top:14px; }
-    p, li { font-size:13.2px; line-height:1.62; }
-    li { margin-left:17px; }
-    strong { color:#111; }
-    @media print { body { background:white; } .page { margin:0; max-width:none; box-shadow:none; border-radius:0; } }
+    body{margin:0;background:#f8fafc;font-family:Georgia,"Times New Roman",serif;color:#222}
+    .page{max-width:860px;margin:24px auto;background:white;padding:48px 58px;border-radius:12px;box-shadow:0 18px 45px rgba(0,0,0,.1)}
+    .name{font-family:Arial,Helvetica,sans-serif;font-size:31px;letter-spacing:5px;text-transform:uppercase;font-weight:800;margin-bottom:6px}
+    .role{font-family:Arial,Helvetica,sans-serif;letter-spacing:3px;color:#6b7280;text-transform:uppercase;margin-bottom:20px}
+    .line{height:3px;background:#222;margin-bottom:22px}
+    .contact{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#4b5563;margin-bottom:22px;line-height:1.5}
+    h1{display:none}
+    h2{font-family:Arial,Helvetica,sans-serif;font-size:15px;letter-spacing:4px;text-transform:uppercase;margin-top:22px;margin-bottom:9px;color:#333}
+    h3{font-family:Arial,Helvetica,sans-serif;font-size:14px;margin-top:14px}
+    p,li{font-size:13.2px;line-height:1.62}
+    li{margin-left:17px}
+    strong{color:#111}
+    @media print{body{background:white}.page{margin:0;max-width:none;box-shadow:none;border-radius:0}.no-print{display:none!important}}
   </style>
 </head>
 <body>
@@ -321,29 +326,40 @@ function getProfessionalDocumentHtml(text, profile, template = "ats-blue") {
   <meta charset="UTF-8" />
   <title>${escapeHtml(title)}</title>
   <style>
-    body { margin:0; background:#f3f4f6; font-family:Arial, Helvetica, sans-serif; color:#111827; }
-    .page { max-width:850px; margin:24px auto; background:white; padding:44px 54px; border-radius:14px; box-shadow:0 18px 45px rgba(0,0,0,0.12); }
-    .header { border-bottom:4px solid #1e6091; padding-bottom:13px; margin-bottom:22px; }
-    .name { font-size:33px; color:#1e6091; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
-    .role { font-size:15px; font-weight:700; color:#334155; margin-bottom:7px; }
-    .contact { font-size:12px; color:#475569; line-height:1.5; }
-    h1 { display:none; }
-    h2 { font-size:15px; margin-top:22px; margin-bottom:9px; color:#1e6091; text-transform:uppercase; border-bottom:1px solid #9ca3af; padding-bottom:6px; }
-    h3 { font-size:14px; margin-top:15px; color:#111827; }
-    p, li { font-size:13.2px; line-height:1.58; }
-    li { margin-left:17px; }
-    strong { color:#111827; }
-    @media print { body { background:white; } .page { box-shadow:none; margin:0; max-width:none; border-radius:0; } }
+    body{margin:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#111827}
+    .page{max-width:850px;margin:24px auto;background:white;padding:30px 38px;box-shadow:0 18px 45px rgba(15,23,42,.14)}
+    .top{display:grid;grid-template-columns:96px 1fr;gap:22px;align-items:start;margin-bottom:18px}
+    .photo{width:88px;height:88px;background:#dbeafe;border:1px solid #bfdbfe;display:flex;align-items:center;justify-content:center;color:#0f4c81;font-weight:800;font-size:28px}
+    .name{font-size:26px;line-height:1;font-weight:800;text-transform:uppercase;color:#0f4c81;margin-bottom:10px;letter-spacing:.5px}
+    .contact-grid{display:grid;grid-template-columns:80px 1fr;gap:3px 8px;font-size:11.5px;line-height:1.35}
+    .contact-grid strong{color:#111827}
+    h1{display:none}
+    h2{font-size:13px;color:#0f4c81;text-transform:uppercase;margin:18px 0 7px;padding-bottom:5px;border-bottom:2px solid #0f4c81;letter-spacing:.3px}
+    h3{font-size:13px;margin:10px 0 3px;color:#111827}
+    p{font-size:11.8px;line-height:1.48;margin:0 0 7px}
+    li{font-size:11.8px;line-height:1.42;margin-left:16px;margin-bottom:2px}
+    strong{color:#111827}
+    .body-content{margin-top:8px}
+    @media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;padding:24px 32px}.no-print{display:none!important}}
   </style>
 </head>
 <body>
   <div class="page">
-    <div class="header">
-      <div class="name">${escapeHtml(profile?.name || "Candidate Name")}</div>
-      <div class="role">${escapeHtml(profile?.role || "Target Role")}</div>
-      <div class="contact">${escapeHtml(contactLine || "Contact details not provided")}</div>
+    <div class="top">
+      <div class="photo">${escapeHtml(initials)}</div>
+      <div>
+        <div class="name">${escapeHtml(profile?.name || "Candidate Name")}</div>
+        <div class="contact-grid">
+          <strong>Address:</strong><span>${escapeHtml(profile?.location || "Not provided")}</span>
+          <strong>Phone:</strong><span>${escapeHtml(profile?.phone || "Not provided")}</span>
+          <strong>Email:</strong><span>${escapeHtml(profile?.email || "Not provided")}</span>
+          <strong>Website:</strong><span>${escapeHtml(profile?.portfolio || profile?.github || "Not provided")}</span>
+        </div>
+      </div>
     </div>
-    <p>${body}</p>
+    <div class="body-content">
+      <p>${body}</p>
+    </div>
   </div>
 </body>
 </html>`
@@ -522,10 +538,7 @@ function ArraySection({
   )
 }
 
-function TemplateSelector({
-  selectedResumeTemplate,
-  setSelectedResumeTemplate,
-}) {
+function TemplateSelector({ selectedResumeTemplate, setSelectedResumeTemplate }) {
   return (
     <div className="mb-4 bg-black/20 border border-white/10 rounded-2xl p-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
@@ -539,7 +552,7 @@ function TemplateSelector({
         <span className="text-xs bg-purple-500/20 text-purple-200 px-3 py-1 rounded-full">
           Selected:{" "}
           {resumeTemplates.find((template) => template.id === selectedResumeTemplate)
-            ?.name || "ATS Blue Line"}
+            ?.name || "Classic Photo Header"}
         </span>
       </div>
 
@@ -565,10 +578,17 @@ function TemplateSelector({
             <p className="text-xs text-gray-400 mb-3">{template.description}</p>
 
             <div className="bg-white rounded-lg h-20 overflow-hidden">
-              {template.id === "ats-blue" && (
-                <div className="p-3">
-                  <div className="h-3 bg-blue-700 w-3/4 mb-2"></div>
-                  <div className="h-1 bg-blue-700 w-full mb-3"></div>
+              {template.id === "classic-photo" && (
+                <div className="p-2">
+                  <div className="flex gap-2 mb-2">
+                    <div className="h-9 w-9 bg-blue-200"></div>
+                    <div className="flex-1">
+                      <div className="h-2 bg-blue-800 w-3/4 mb-1"></div>
+                      <div className="h-1 bg-gray-500 w-full mb-1"></div>
+                      <div className="h-1 bg-gray-400 w-5/6"></div>
+                    </div>
+                  </div>
+                  <div className="h-1 bg-blue-800 w-full mb-2"></div>
                   <div className="h-1 bg-gray-400 w-full mb-1"></div>
                   <div className="h-1 bg-gray-300 w-5/6 mb-1"></div>
                   <div className="h-1 bg-gray-300 w-4/6"></div>
@@ -618,6 +638,75 @@ function TemplateSelector({
   )
 }
 
+function StatCard({ title, value }) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+      <p className="text-gray-400">{title}</p>
+      <h3 className="text-4xl font-bold mt-2">{value}</h3>
+    </div>
+  )
+}
+
+function SectionHeader({ label, title, description, compact = false }) {
+  return (
+    <div className={compact ? "" : "mb-8"}>
+      <p className="text-blue-400 font-semibold mb-2">{label}</p>
+      <h2 className="text-4xl font-bold mb-3">{title}</h2>
+      <p className="text-gray-400 text-lg">{description}</p>
+    </div>
+  )
+}
+
+function SearchBox({ label, children }) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+      <label className="text-gray-400 text-sm">{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function ActionButton({ color, onClick, children }) {
+  const colors = {
+    purple: "bg-purple-600 hover:bg-purple-700",
+    gray: "bg-white/10 hover:bg-white/20",
+    blue: "bg-blue-600 hover:bg-blue-700",
+    green: "bg-green-600 hover:bg-green-700",
+    pink: "bg-pink-600 hover:bg-pink-700",
+    red: "bg-red-500/20 hover:bg-red-500/30 text-red-100",
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full ${colors[color]} py-3 px-4 rounded-xl text-left font-semibold`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function MiniCopyCard({ title, text, copied, copyKey, onCopy }) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+      <div className="flex justify-between mb-4">
+        <h3 className="text-xl font-bold">{title}</h3>
+        <button
+          type="button"
+          onClick={() => onCopy(text, copyKey)}
+          className="bg-white/10 px-3 py-1 rounded-lg text-sm"
+        >
+          {copied === copyKey ? "Copied ✅" : "Copy"}
+        </button>
+      </div>
+      <p className="text-gray-300 text-sm whitespace-pre-line max-h-72 overflow-y-auto">
+        {text}
+      </p>
+    </div>
+  )
+}
+
 function App() {
   const [profile, setProfile] = useState(() =>
     normalizeProfile(safeParse(localStorage.getItem("jobpilot_profile"), null))
@@ -660,7 +749,7 @@ function App() {
   const [aiLoading, setAiLoading] = useState(false)
   const [openProfileSection, setOpenProfileSection] = useState("personal")
   const [selectedResumeTemplate, setSelectedResumeTemplate] =
-    useState("ats-blue")
+    useState("classic-photo")
 
   const aiChatRef = useRef(null)
   const aiInputRef = useRef(null)
@@ -1046,21 +1135,42 @@ ${profile.phone}`,
       profile,
       selectedResumeTemplate
     )
-    const printWindow = window.open("", "_blank")
+
+    const printPage = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Export Resume</title>
+  <style>
+    body{margin:0;background:#0f172a;font-family:Arial,Helvetica,sans-serif}
+    .toolbar{position:sticky;top:0;z-index:9999;background:#0f172a;color:white;padding:12px 18px;display:flex;justify-content:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.12)}
+    .toolbar button{border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer}
+    .print{background:#7c3aed;color:white}
+    .close{background:#334155;color:white}
+    @media print{.toolbar{display:none}body{background:white}}
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="print" onclick="window.print()">Print / Save as PDF</button>
+    <button class="close" onclick="window.close()">Close</button>
+  </div>
+  ${html}
+</body>
+</html>`
+
+    const blob = new Blob([printPage], { type: "text/html;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const printWindow = window.open(url, "_blank", "noopener,noreferrer")
 
     if (!printWindow) {
       alert("Popup blocked. Please allow popups and try again.")
+      URL.revokeObjectURL(url)
       return
     }
 
-    printWindow.document.open()
-    printWindow.document.write(html)
-    printWindow.document.close()
-
-    printWindow.onload = () => {
-      printWindow.focus()
-      printWindow.print()
-    }
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
   }
 
   const exportMessageAsDoc = (text) => {
@@ -2475,75 +2585,6 @@ ${profile.phone}`,
           </div>
         </div>
       </section>
-    </div>
-  )
-}
-
-function StatCard({ title, value }) {
-  return (
-    <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
-      <p className="text-gray-400">{title}</p>
-      <h3 className="text-4xl font-bold mt-2">{value}</h3>
-    </div>
-  )
-}
-
-function SectionHeader({ label, title, description, compact = false }) {
-  return (
-    <div className={compact ? "" : "mb-8"}>
-      <p className="text-blue-400 font-semibold mb-2">{label}</p>
-      <h2 className="text-4xl font-bold mb-3">{title}</h2>
-      <p className="text-gray-400 text-lg">{description}</p>
-    </div>
-  )
-}
-
-function SearchBox({ label, children }) {
-  return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-      <label className="text-gray-400 text-sm">{label}</label>
-      {children}
-    </div>
-  )
-}
-
-function ActionButton({ color, onClick, children }) {
-  const colors = {
-    purple: "bg-purple-600 hover:bg-purple-700",
-    gray: "bg-white/10 hover:bg-white/20",
-    blue: "bg-blue-600 hover:bg-blue-700",
-    green: "bg-green-600 hover:bg-green-700",
-    pink: "bg-pink-600 hover:bg-pink-700",
-    red: "bg-red-500/20 hover:bg-red-500/30 text-red-100",
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`w-full ${colors[color]} py-3 px-4 rounded-xl text-left font-semibold`}
-    >
-      {children}
-    </button>
-  )
-}
-
-function MiniCopyCard({ title, text, copied, copyKey, onCopy }) {
-  return (
-    <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
-      <div className="flex justify-between mb-4">
-        <h3 className="text-xl font-bold">{title}</h3>
-        <button
-          type="button"
-          onClick={() => onCopy(text, copyKey)}
-          className="bg-white/10 px-3 py-1 rounded-lg text-sm"
-        >
-          {copied === copyKey ? "Copied ✅" : "Copy"}
-        </button>
-      </div>
-      <p className="text-gray-300 text-sm whitespace-pre-line max-h-72 overflow-y-auto">
-        {text}
-      </p>
     </div>
   )
 }
