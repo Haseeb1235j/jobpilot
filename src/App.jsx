@@ -123,6 +123,7 @@ function App() {
 
       setJobs(data.jobs || [])
     } catch (error) {
+      console.error("Job loading error:", error)
       setJobError("Could not load jobs. Make sure backend is running.")
     }
 
@@ -310,7 +311,7 @@ ${profile.portfolio}`,
       console.log("Email response:", data)
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Email failed")
+        throw new Error(data.error || "Email failed. Check Render logs.")
       }
 
       setEmailStatus("Email sent successfully ✅")
