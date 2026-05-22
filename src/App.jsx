@@ -2,62 +2,205 @@ import { useEffect, useState } from "react"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
 
-function App() {
-  const defaultProfile = {
-    name: "Mohammad Haseeb",
-    role: "Frontend Developer",
-    email: "haaseebrahman21@gmail.com",
-    phone: "+91 9666050726",
-    location: "Hyderabad, Telangana, India",
-    linkedin: "",
-    github: "github.com/yourusername",
-    portfolio: "github.com/yourusername",
+const emptyProject = {
+  name: "",
+  description: "",
+  tech: "",
+  link: "",
+}
 
-    summary:
-      "Motivated frontend developer with practical experience building responsive web applications using React, JavaScript, Tailwind CSS, Node.js, and APIs.",
+const emptyEducation = {
+  degree: "",
+  college: "",
+  branch: "",
+  year: "",
+  score: "",
+}
 
-    technicalSkills: "React, JavaScript, HTML, CSS, Tailwind CSS, Python, APIs",
-    softSkills: "Communication, Problem Solving, Quick Learning, Teamwork",
-    tools: "Git, GitHub, VS Code, Vercel, Render",
+const emptyExperience = {
+  type: "Fresher",
+  company: "",
+  role: "",
+  duration: "",
+  description: "",
+}
 
-    degree: "B.Tech",
-    college: "",
-    branch: "",
-    graduationYear: "",
-    cgpa: "",
+const emptyCertification = {
+  name: "",
+  issuer: "",
+  year: "",
+  link: "",
+}
 
-    project1Name: "JobPilot AI Career Assistant",
-    project1Description:
-      "Built an AI career assistant web app with real job search, application tracking, AI resume help, and Gmail-based application sending.",
-    project1Tech: "React, Tailwind CSS, Node.js, Express, Groq AI, Adzuna API",
-    project1Link: "github.com/yourusername",
+const emptyAchievement = {
+  title: "",
+  description: "",
+}
 
-    project2Name: "Portfolio Website",
-    project2Description:
-      "Created a personal portfolio website to showcase skills, projects, and contact details.",
-    project2Tech: "React, Tailwind CSS",
-    project2Link: "",
+const emptyLanguage = {
+  name: "",
+  level: "",
+}
 
-    experienceType: "Fresher",
-    companyName: "",
-    experienceRole: "",
-    experienceDuration: "",
-    experienceDescription:
-      "Built practical projects to improve frontend development, backend integration, API usage, and deployment skills.",
+const defaultProfile = {
+  name: "Mohammad Haseeb",
+  role: "Frontend Developer",
+  email: "haaseebrahman21@gmail.com",
+  phone: "+91 9666050726",
+  location: "Hyderabad, Telangana, India",
+  linkedin: "",
+  github: "github.com/yourusername",
+  portfolio: "github.com/yourusername",
 
-    certifications: "",
-    achievements: "",
-    languages: "English, Hindi, Telugu",
+  summary:
+    "Motivated frontend developer with practical experience building responsive web applications using React, JavaScript, Tailwind CSS, Node.js, and APIs.",
 
-    resumeStyle: "ATS Friendly",
-    preferredLocation: "Hyderabad, Bangalore, Remote",
-    expectedSalary: "",
-    noticePeriod: "Immediate",
+  technicalSkills: "React, JavaScript, HTML, CSS, Tailwind CSS, Python, APIs",
+  softSkills: "Communication, Problem Solving, Quick Learning, Teamwork",
+  tools: "Git, GitHub, VS Code, Vercel, Render",
+
+  educations: [
+    {
+      degree: "B.Tech",
+      college: "",
+      branch: "",
+      year: "",
+      score: "",
+    },
+  ],
+
+  projects: [
+    {
+      name: "JobPilot AI Career Assistant",
+      description:
+        "Built an AI career assistant web app with real job search, application tracking, AI resume help, and Gmail-based application sending.",
+      tech: "React, Tailwind CSS, Node.js, Express, Groq AI, Adzuna API",
+      link: "github.com/yourusername",
+    },
+    {
+      name: "Portfolio Website",
+      description:
+        "Created a personal portfolio website to showcase skills, projects, and contact details.",
+      tech: "React, Tailwind CSS",
+      link: "",
+    },
+  ],
+
+  experiences: [
+    {
+      type: "Fresher",
+      company: "",
+      role: "",
+      duration: "",
+      description:
+        "Built practical projects to improve frontend development, backend integration, API usage, and deployment skills.",
+    },
+  ],
+
+  certifications: [],
+  achievements: [],
+  languages: [
+    { name: "English", level: "Good" },
+    { name: "Hindi", level: "Good" },
+    { name: "Telugu", level: "Native" },
+  ],
+
+  resumeStyle: "ATS Friendly",
+  preferredLocation: "Hyderabad, Bangalore, Remote",
+  expectedSalary: "",
+  noticePeriod: "Immediate",
+}
+
+function normalizeProfile(savedProfile) {
+  const old = savedProfile || {}
+
+  return {
+    ...defaultProfile,
+    ...old,
+
+    educations:
+      Array.isArray(old.educations) && old.educations.length > 0
+        ? old.educations
+        : [
+            {
+              degree: old.degree || "B.Tech",
+              college: old.college || "",
+              branch: old.branch || "",
+              year: old.graduationYear || "",
+              score: old.cgpa || "",
+            },
+          ],
+
+    projects:
+      Array.isArray(old.projects) && old.projects.length > 0
+        ? old.projects
+        : [
+            {
+              name: old.project1Name || "JobPilot AI Career Assistant",
+              description:
+                old.project1Description ||
+                "Built an AI career assistant web app with real job search, application tracking, AI resume help, and Gmail-based application sending.",
+              tech:
+                old.project1Tech ||
+                "React, Tailwind CSS, Node.js, Express, Groq AI, Adzuna API",
+              link: old.project1Link || old.portfolio || "",
+            },
+            {
+              name: old.project2Name || "Portfolio Website",
+              description:
+                old.project2Description ||
+                "Created a personal portfolio website to showcase skills, projects, and contact details.",
+              tech: old.project2Tech || "React, Tailwind CSS",
+              link: old.project2Link || "",
+            },
+          ],
+
+    experiences:
+      Array.isArray(old.experiences) && old.experiences.length > 0
+        ? old.experiences
+        : [
+            {
+              type: old.experienceType || "Fresher",
+              company: old.companyName || "",
+              role: old.experienceRole || "",
+              duration: old.experienceDuration || "",
+              description:
+                old.experienceDescription ||
+                old.experience ||
+                "Built practical projects to improve frontend development, backend integration, API usage, and deployment skills.",
+            },
+          ],
+
+    certifications:
+      Array.isArray(old.certifications) && old.certifications.length > 0
+        ? old.certifications
+        : old.certifications
+        ? [{ name: old.certifications, issuer: "", year: "", link: "" }]
+        : [],
+
+    achievements:
+      Array.isArray(old.achievements) && old.achievements.length > 0
+        ? old.achievements
+        : old.achievements
+        ? [{ title: old.achievements, description: "" }]
+        : [],
+
+    languages:
+      Array.isArray(old.languages) && old.languages.length > 0
+        ? old.languages
+        : typeof old.languages === "string"
+        ? old.languages
+            .split(",")
+            .map((lang) => ({ name: lang.trim(), level: "" }))
+            .filter((lang) => lang.name)
+        : defaultProfile.languages,
   }
+}
 
+function App() {
   const [profile, setProfile] = useState(() => {
     const saved = localStorage.getItem("jobpilot_profile")
-    return saved ? { ...defaultProfile, ...JSON.parse(saved) } : defaultProfile
+    return saved ? normalizeProfile(JSON.parse(saved)) : defaultProfile
   })
 
   const [search, setSearch] = useState({
@@ -91,7 +234,7 @@ function App() {
       : [
           {
             role: "ai",
-            text: "Hi 👋 I am JobPilot AI. Fill your Candidate Resume Details, then ask me to generate a professional resume, improve your skills, prepare for interviews, or write a job application email.",
+            text: "Hi 👋 I am JobPilot AI. Fill your candidate details, then ask me to generate a professional resume, improve your skills, prepare for interviews, or write a job application email.",
           },
         ]
   })
@@ -114,6 +257,11 @@ function App() {
     localStorage.setItem("jobpilot_ai_messages", JSON.stringify(aiMessages))
   }, [aiMessages])
 
+  const inputClass =
+    "w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+  const textareaClass =
+    "w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+
   const scrollToSection = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
   }
@@ -122,12 +270,90 @@ function App() {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
 
+  const updateArrayItem = (section, index, field, value) => {
+    setProfile((prev) => ({
+      ...prev,
+      [section]: prev[section].map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      ),
+    }))
+  }
+
+  const addArrayItem = (section, emptyItem) => {
+    setProfile((prev) => ({
+      ...prev,
+      [section]: [...prev[section], emptyItem],
+    }))
+  }
+
+  const removeArrayItem = (section, index) => {
+    setProfile((prev) => ({
+      ...prev,
+      [section]: prev[section].filter((_, i) => i !== index),
+    }))
+  }
+
+  const projectsText = profile.projects
+    .filter((project) => project.name || project.description)
+    .map(
+      (project, index) =>
+        `Project ${index + 1}: ${project.name}
+Description: ${project.description}
+Tech Stack: ${project.tech}
+Link: ${project.link}`
+    )
+    .join("\n\n")
+
+  const educationText = profile.educations
+    .filter((edu) => edu.degree || edu.college)
+    .map(
+      (edu, index) =>
+        `Education ${index + 1}: ${edu.degree}, ${edu.branch}, ${edu.college}, ${edu.year}, ${edu.score}`
+    )
+    .join("\n")
+
+  const experienceText = profile.experiences
+    .filter((exp) => exp.type || exp.description || exp.company)
+    .map(
+      (exp, index) =>
+        `Experience ${index + 1}: ${exp.type}
+Company: ${exp.company}
+Role: ${exp.role}
+Duration: ${exp.duration}
+Description: ${exp.description}`
+    )
+    .join("\n\n")
+
+  const certificationText = profile.certifications
+    .filter((cert) => cert.name)
+    .map(
+      (cert, index) =>
+        `Certification ${index + 1}: ${cert.name}, ${cert.issuer}, ${cert.year}, ${cert.link}`
+    )
+    .join("\n")
+
+  const achievementText = profile.achievements
+    .filter((ach) => ach.title || ach.description)
+    .map(
+      (ach, index) =>
+        `Achievement ${index + 1}: ${ach.title} - ${ach.description}`
+    )
+    .join("\n")
+
+  const languageText = profile.languages
+    .filter((lang) => lang.name)
+    .map((lang) => `${lang.name}${lang.level ? ` - ${lang.level}` : ""}`)
+    .join(", ")
+
   const profileForAI = {
     ...profile,
     skills: profile.technicalSkills,
-    experience: `${profile.experienceType}. ${profile.experienceDescription}`,
-    projects: `${profile.project1Name}: ${profile.project1Description}. Tech: ${profile.project1Tech}. ${profile.project2Name}: ${profile.project2Description}. Tech: ${profile.project2Tech}`,
-    education: `${profile.degree}, ${profile.branch}, ${profile.college}, ${profile.graduationYear}, ${profile.cgpa}`,
+    experience: experienceText,
+    projects: projectsText,
+    education: educationText,
+    certificationsText: certificationText,
+    achievementsText: achievementText,
+    languagesText: languageText,
   }
 
   const calculateMatch = (job) => {
@@ -183,9 +409,7 @@ function App() {
 
       const data = await res.json()
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to load jobs")
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to load jobs")
 
       setJobs(data.jobs || [])
     } catch (error) {
@@ -196,12 +420,18 @@ function App() {
     setLoadingJobs(false)
   }
 
+  const getMainProject = () => {
+    return profile.projects.find((project) => project.name) || emptyProject
+  }
+
   const buildApplicationPack = (job) => {
+    const mainProject = getMainProject()
+
     const coverLetter = `Dear Hiring Manager,
 
 I am excited to apply for the ${job.title} role at ${job.company}. My background in ${profile.technicalSkills} and my hands-on project work make me confident that I can contribute to this role.
 
-One of my key projects is ${profile.project1Name}, where I worked on ${profile.project1Description}
+One of my key projects is ${mainProject.name}, where I worked on ${mainProject.description}
 
 I am interested in this opportunity because it matches my goal of growing as a ${profile.role}. I am motivated, quick to learn, and ready to contribute with strong effort and practical skills.
 
@@ -213,48 +443,25 @@ ${profile.email}
 ${profile.phone}
 ${profile.portfolio}`
 
-    const recruiterMessage = `Hi,
-
-I came across the ${job.title} opening at ${job.company}, and I am interested in applying.
-
-I have skills in ${profile.technicalSkills}, and I have built projects like ${profile.project1Name}. I would be grateful if you could review my profile for this opportunity.
-
-Portfolio/GitHub: ${profile.portfolio}
-
-Thank you,
-${profile.name}`
-
     const resumeTips = `Resume improvements for this job:
 
 1. Keep your target role close to "${job.title}".
 2. Highlight these skills clearly: ${profile.technicalSkills}.
-3. Add strong project points from: ${profile.project1Name}.
+3. Add strong project points from: ${mainProject.name}.
 4. Use keywords from the job description.
 5. Add action words like Built, Developed, Integrated, Improved.
 6. Keep resume clean and one page if applying as fresher.
 7. Add portfolio/GitHub link near contact details.`
 
-    const checklist = `Apply checklist:
-
-1. Review the job page.
-2. Update resume for this job.
-3. Review the generated email.
-4. Enter recipient email.
-5. Click Open in Gmail.
-6. Review the email inside Gmail.
-7. Click Send manually from your Gmail.
-8. Mark job as Applied.
-9. Follow up after 3 to 5 days.`
-
     return {
       coverLetter,
-      recruiterMessage,
       resumeTips,
-      checklist,
     }
   }
 
   const buildEmailDraft = (job) => {
+    const mainProject = getMainProject()
+
     return {
       subject: `Application for ${job.title} - ${profile.name}`,
       body: `Dear Hiring Manager,
@@ -263,7 +470,7 @@ I hope you are doing well.
 
 I am writing to apply for the ${job.title} position at ${job.company}. I have experience working with ${profile.technicalSkills}, and I am interested in this opportunity because it matches my goal of growing as a ${profile.role}.
 
-One of my key projects is ${profile.project1Name}, where I gained practical experience in frontend development, backend integration, API usage, and deployment.
+One of my key projects is ${mainProject.name}, where I gained practical experience in frontend development, backend integration, API usage, and deployment.
 
 I am a quick learner, motivated to improve, and excited to contribute to your team.
 
@@ -293,12 +500,9 @@ ${profile.phone}`,
       note: "",
     }
 
-    const pack = buildApplicationPack(cleanJob)
-    const draft = buildEmailDraft(cleanJob)
-
     setSelectedJob(cleanJob)
-    setApplicationPack(pack)
-    setEmailDraft(draft)
+    setApplicationPack(buildApplicationPack(cleanJob))
+    setEmailDraft(buildEmailDraft(cleanJob))
     setRecipientEmail("")
     setEmailStatus("")
 
@@ -311,7 +515,6 @@ ${profile.phone}`,
       )
 
       if (exists) return prev
-
       return [...prev, cleanJob]
     })
 
@@ -320,7 +523,6 @@ ${profile.phone}`,
 
   const askAgent = async (messageText) => {
     const cleanMessage = messageText.trim()
-
     if (!cleanMessage) return
 
     setAiMessages((prev) => [...prev, { role: "user", text: cleanMessage }])
@@ -401,11 +603,6 @@ ${profile.phone}`,
       return
     }
 
-    if (!emailDraft.subject || !emailDraft.body) {
-      setEmailStatus("Please check subject and body before opening Gmail.")
-      return
-    }
-
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
       recipientEmail.trim()
     )}&su=${encodeURIComponent(emailDraft.subject)}&body=${encodeURIComponent(
@@ -415,14 +612,9 @@ ${profile.phone}`,
     window.open(gmailUrl, "_blank")
     setEmailStatus("Gmail opened ✅ Review and click Send in Gmail.")
 
-    setSelectedJob((prev) => ({
-      ...prev,
-      status: "Ready",
-      note: "Opened in Gmail",
-    }))
-
     setSavedApplications((prev) =>
       prev.map((job) =>
+        selectedJob &&
         job.title === selectedJob.title &&
         job.company === selectedJob.company &&
         job.location === selectedJob.location
@@ -479,10 +671,7 @@ ${profile.phone}`,
       job.url || "",
     ])
 
-    const escapeCSV = (value) => {
-      const text = String(value ?? "")
-      return `"${text.replace(/"/g, '""')}"`
-    }
+    const escapeCSV = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`
 
     const csv = [
       headers.map(escapeCSV).join(","),
@@ -506,11 +695,9 @@ ${profile.phone}`,
       return
     }
 
-    const confirmClear = window.confirm(
-      "Are you sure you want to clear all saved applications?"
-    )
-
-    if (!confirmClear) return
+    if (!window.confirm("Are you sure you want to clear all saved applications?")) {
+      return
+    }
 
     setSavedApplications([])
     localStorage.removeItem("jobpilot_saved_applications")
@@ -525,28 +712,30 @@ ${profile.phone}`,
     ])
   }
 
-  const resumeScore = Math.round(
-    [
-      profile.name,
-      profile.role,
-      profile.email,
-      profile.phone,
-      profile.location,
-      profile.portfolio,
-      profile.technicalSkills,
-      profile.summary,
-      profile.degree,
-      profile.college,
-      profile.project1Name,
-      profile.project1Description,
-      profile.experienceDescription,
-    ].filter((x) => x && x.trim().length > 3).length * 7.7
+  const profileScore = Math.min(
+    100,
+    Math.round(
+      [
+        profile.name,
+        profile.role,
+        profile.email,
+        profile.phone,
+        profile.location,
+        profile.portfolio,
+        profile.technicalSkills,
+        profile.summary,
+        profile.projects.find((p) => p.name && p.description)?.name,
+        profile.educations.find((e) => e.degree && e.college)?.degree,
+      ].filter((x) => x && String(x).trim().length > 3).length * 10
+    )
   )
 
-  const inputClass =
-    "w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
-  const textareaClass =
-    "w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+  const SectionCard = ({ title, children }) => (
+    <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+      <h3 className="text-2xl font-bold mb-6">{title}</h3>
+      {children}
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
@@ -623,7 +812,7 @@ ${profile.phone}`,
           <div className="grid grid-cols-2 gap-5">
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
               <p className="text-gray-400">Profile Score</p>
-              <h3 className="text-5xl font-bold mt-3">{Math.min(resumeScore, 100)}%</h3>
+              <h3 className="text-5xl font-bold mt-3">{profileScore}%</h3>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
@@ -632,16 +821,14 @@ ${profile.phone}`,
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <p className="text-gray-400">Saved</p>
-              <h3 className="text-5xl font-bold mt-3">
-                {savedApplications.length}
-              </h3>
+              <p className="text-gray-400">Projects</p>
+              <h3 className="text-5xl font-bold mt-3">{profile.projects.length}</h3>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <p className="text-gray-400">Best Match</p>
+              <p className="text-gray-400">Saved</p>
               <h3 className="text-5xl font-bold mt-3">
-                {rankedJobs[0]?.matchScore ? `${rankedJobs[0].matchScore}%` : "—"}
+                {savedApplications.length}
               </h3>
             </div>
           </div>
@@ -653,8 +840,8 @@ ${profile.phone}`,
           <p className="text-purple-400 font-semibold mb-3">JobPilot AI Agent</p>
           <h2 className="text-5xl font-bold mb-4">Ask AI Anything</h2>
           <p className="text-gray-400 text-lg">
-            Generate professional resumes, improve skills, prepare for interviews,
-            create job emails, and get personal career guidance using your full candidate details.
+            Generate resumes, improve skills, prepare for interviews, create job emails,
+            and get personal career guidance using your full candidate details.
           </p>
         </div>
 
@@ -666,7 +853,7 @@ ${profile.phone}`,
               <button
                 onClick={() =>
                   quickAskAgent(
-                    "Generate my professional ATS-friendly resume using all my candidate profile details. Make it clean, truthful, strong, and suitable for my target role. Include professional summary, skills, education, projects, experience, certifications, achievements, and languages if available."
+                    "Generate my professional ATS-friendly resume using all my candidate profile details. Make it clean, truthful, strong, and suitable for my target role. Include summary, skills, education, projects, experience, certifications, achievements, and languages if available."
                   )
                 }
                 className="w-full bg-purple-600 hover:bg-purple-700 py-3 px-4 rounded-xl text-left font-semibold"
@@ -1203,14 +1390,13 @@ ${profile.phone}`,
           </p>
           <h2 className="text-5xl font-bold mb-4">Complete Your Profile</h2>
           <p className="text-gray-400 text-lg">
-            JobPilot AI uses these details to generate professional resumes, emails,
-            interview preparation, and skill roadmaps.
+            Add as many projects, education details, experiences, certifications,
+            achievements, and languages as you need.
           </p>
         </div>
 
         <div className="space-y-8">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Personal Details</h3>
+          <SectionCard title="Personal Details">
             <div className="grid md:grid-cols-2 gap-5">
               {[
                 ["name", "Full Name"],
@@ -1232,10 +1418,9 @@ ${profile.phone}`,
                 </div>
               ))}
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Professional Summary</h3>
+          <SectionCard title="Professional Summary">
             <textarea
               value={profile.summary}
               onChange={(e) => updateProfile("summary", e.target.value)}
@@ -1243,10 +1428,9 @@ ${profile.phone}`,
               className={textareaClass}
               placeholder="Write a short professional summary..."
             />
-          </div>
+          </SectionCard>
 
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Skills</h3>
+          <SectionCard title="Skills">
             <div className="grid md:grid-cols-3 gap-5">
               <div>
                 <label className="text-gray-400 text-sm">Technical Skills</label>
@@ -1278,207 +1462,420 @@ ${profile.phone}`,
                 />
               </div>
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Education</h3>
-            <div className="grid md:grid-cols-2 gap-5">
-              {[
-                ["degree", "Degree"],
-                ["college", "College / University"],
-                ["branch", "Branch / Course"],
-                ["graduationYear", "Graduation Year"],
-                ["cgpa", "CGPA / Percentage"],
-              ].map(([field, label]) => (
-                <div key={field}>
-                  <label className="text-gray-400 text-sm">{label}</label>
-                  <input
-                    value={profile[field]}
-                    onChange={(e) => updateProfile(field, e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Projects</h3>
-
-            <div className="mb-8">
-              <h4 className="text-xl font-semibold mb-4">Project 1</h4>
-              <div className="grid md:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-gray-400 text-sm">Project Name</label>
-                  <input
-                    value={profile.project1Name}
-                    onChange={(e) => updateProfile("project1Name", e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-400 text-sm">Project Link</label>
-                  <input
-                    value={profile.project1Link}
-                    onChange={(e) => updateProfile("project1Link", e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-400 text-sm">Tech Stack</label>
-                  <textarea
-                    value={profile.project1Tech}
-                    onChange={(e) => updateProfile("project1Tech", e.target.value)}
-                    rows="4"
-                    className={textareaClass}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-400 text-sm">Project Description</label>
-                  <textarea
-                    value={profile.project1Description}
-                    onChange={(e) =>
-                      updateProfile("project1Description", e.target.value)
-                    }
-                    rows="4"
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-xl font-semibold mb-4">Project 2</h4>
-              <div className="grid md:grid-cols-2 gap-5">
-                <div>
-                  <label className="text-gray-400 text-sm">Project Name</label>
-                  <input
-                    value={profile.project2Name}
-                    onChange={(e) => updateProfile("project2Name", e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-400 text-sm">Project Link</label>
-                  <input
-                    value={profile.project2Link}
-                    onChange={(e) => updateProfile("project2Link", e.target.value)}
-                    className={inputClass}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-400 text-sm">Tech Stack</label>
-                  <textarea
-                    value={profile.project2Tech}
-                    onChange={(e) => updateProfile("project2Tech", e.target.value)}
-                    rows="4"
-                    className={textareaClass}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-gray-400 text-sm">Project Description</label>
-                  <textarea
-                    value={profile.project2Description}
-                    onChange={(e) =>
-                      updateProfile("project2Description", e.target.value)
-                    }
-                    rows="4"
-                    className={textareaClass}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Experience</h3>
-            <div className="grid md:grid-cols-2 gap-5">
-              <div>
-                <label className="text-gray-400 text-sm">Experience Type</label>
-                <select
-                  value={profile.experienceType}
-                  onChange={(e) => updateProfile("experienceType", e.target.value)}
-                  className={inputClass}
+          <SectionCard title="Education">
+            <div className="space-y-6">
+              {profile.educations.map((edu, index) => (
+                <div
+                  key={index}
+                  className="bg-black/20 border border-white/10 rounded-2xl p-5"
                 >
-                  <option>Fresher</option>
-                  <option>Internship</option>
-                  <option>Job</option>
-                  <option>Freelance</option>
-                </select>
-              </div>
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xl font-semibold">
+                      Education {index + 1}
+                    </h4>
+                    {profile.educations.length > 1 && (
+                      <button
+                        onClick={() => removeArrayItem("educations", index)}
+                        className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
 
-              {[
-                ["companyName", "Company Name"],
-                ["experienceRole", "Role"],
-                ["experienceDuration", "Duration"],
-              ].map(([field, label]) => (
-                <div key={field}>
-                  <label className="text-gray-400 text-sm">{label}</label>
-                  <input
-                    value={profile[field]}
-                    onChange={(e) => updateProfile(field, e.target.value)}
-                    className={inputClass}
-                  />
+                  <div className="grid md:grid-cols-2 gap-5">
+                    {[
+                      ["degree", "Degree"],
+                      ["college", "College / University"],
+                      ["branch", "Branch / Course"],
+                      ["year", "Year"],
+                      ["score", "CGPA / Percentage"],
+                    ].map(([field, label]) => (
+                      <div key={field}>
+                        <label className="text-gray-400 text-sm">{label}</label>
+                        <input
+                          value={edu[field]}
+                          onChange={(e) =>
+                            updateArrayItem(
+                              "educations",
+                              index,
+                              field,
+                              e.target.value
+                            )
+                          }
+                          className={inputClass}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
 
-              <div className="md:col-span-2">
-                <label className="text-gray-400 text-sm">Work / Practical Experience Description</label>
-                <textarea
-                  value={profile.experienceDescription}
-                  onChange={(e) =>
-                    updateProfile("experienceDescription", e.target.value)
-                  }
-                  rows="5"
-                  className={textareaClass}
-                />
-              </div>
+              <button
+                onClick={() => addArrayItem("educations", { ...emptyEducation })}
+                className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
+              >
+                + Add Education
+              </button>
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Extra Details</h3>
-            <div className="grid md:grid-cols-3 gap-5">
-              <div>
-                <label className="text-gray-400 text-sm">Certifications</label>
-                <textarea
-                  value={profile.certifications}
-                  onChange={(e) => updateProfile("certifications", e.target.value)}
-                  rows="5"
-                  className={textareaClass}
-                />
-              </div>
+          <SectionCard title="Projects">
+            <div className="space-y-6">
+              {profile.projects.map((project, index) => (
+                <div
+                  key={index}
+                  className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xl font-semibold">
+                      Project {index + 1}
+                    </h4>
+                    {profile.projects.length > 1 && (
+                      <button
+                        onClick={() => removeArrayItem("projects", index)}
+                        className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
 
-              <div>
-                <label className="text-gray-400 text-sm">Achievements</label>
-                <textarea
-                  value={profile.achievements}
-                  onChange={(e) => updateProfile("achievements", e.target.value)}
-                  rows="5"
-                  className={textareaClass}
-                />
-              </div>
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-gray-400 text-sm">Project Name</label>
+                      <input
+                        value={project.name}
+                        onChange={(e) =>
+                          updateArrayItem("projects", index, "name", e.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </div>
 
-              <div>
-                <label className="text-gray-400 text-sm">Languages</label>
-                <textarea
-                  value={profile.languages}
-                  onChange={(e) => updateProfile("languages", e.target.value)}
-                  rows="5"
-                  className={textareaClass}
-                />
-              </div>
+                    <div>
+                      <label className="text-gray-400 text-sm">Project Link</label>
+                      <input
+                        value={project.link}
+                        onChange={(e) =>
+                          updateArrayItem("projects", index, "link", e.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-gray-400 text-sm">Tech Stack</label>
+                      <textarea
+                        value={project.tech}
+                        onChange={(e) =>
+                          updateArrayItem("projects", index, "tech", e.target.value)
+                        }
+                        rows="4"
+                        className={textareaClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-gray-400 text-sm">Project Description</label>
+                      <textarea
+                        value={project.description}
+                        onChange={(e) =>
+                          updateArrayItem(
+                            "projects",
+                            index,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                        rows="4"
+                        className={textareaClass}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={() => addArrayItem("projects", { ...emptyProject })}
+                className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
+              >
+                + Add Project
+              </button>
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-            <h3 className="text-2xl font-bold mb-6">Resume Preferences</h3>
+          <SectionCard title="Experience">
+            <div className="space-y-6">
+              {profile.experiences.map((exp, index) => (
+                <div
+                  key={index}
+                  className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xl font-semibold">
+                      Experience {index + 1}
+                    </h4>
+                    {profile.experiences.length > 1 && (
+                      <button
+                        onClick={() => removeArrayItem("experiences", index)}
+                        className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-gray-400 text-sm">Experience Type</label>
+                      <select
+                        value={exp.type}
+                        onChange={(e) =>
+                          updateArrayItem("experiences", index, "type", e.target.value)
+                        }
+                        className={inputClass}
+                      >
+                        <option>Fresher</option>
+                        <option>Internship</option>
+                        <option>Job</option>
+                        <option>Freelance</option>
+                      </select>
+                    </div>
+
+                    {[
+                      ["company", "Company Name"],
+                      ["role", "Role"],
+                      ["duration", "Duration"],
+                    ].map(([field, label]) => (
+                      <div key={field}>
+                        <label className="text-gray-400 text-sm">{label}</label>
+                        <input
+                          value={exp[field]}
+                          onChange={(e) =>
+                            updateArrayItem(
+                              "experiences",
+                              index,
+                              field,
+                              e.target.value
+                            )
+                          }
+                          className={inputClass}
+                        />
+                      </div>
+                    ))}
+
+                    <div className="md:col-span-2">
+                      <label className="text-gray-400 text-sm">Description</label>
+                      <textarea
+                        value={exp.description}
+                        onChange={(e) =>
+                          updateArrayItem(
+                            "experiences",
+                            index,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                        rows="5"
+                        className={textareaClass}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={() => addArrayItem("experiences", { ...emptyExperience })}
+                className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
+              >
+                + Add Experience
+              </button>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Certifications">
+            <div className="space-y-6">
+              {profile.certifications.map((cert, index) => (
+                <div
+                  key={index}
+                  className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xl font-semibold">
+                      Certification {index + 1}
+                    </h4>
+                    <button
+                      onClick={() => removeArrayItem("certifications", index)}
+                      className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
+                    {[
+                      ["name", "Certification Name"],
+                      ["issuer", "Issued By"],
+                      ["year", "Year"],
+                      ["link", "Certificate Link"],
+                    ].map(([field, label]) => (
+                      <div key={field}>
+                        <label className="text-gray-400 text-sm">{label}</label>
+                        <input
+                          value={cert[field]}
+                          onChange={(e) =>
+                            updateArrayItem(
+                              "certifications",
+                              index,
+                              field,
+                              e.target.value
+                            )
+                          }
+                          className={inputClass}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={() =>
+                  addArrayItem("certifications", { ...emptyCertification })
+                }
+                className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
+              >
+                + Add Certification
+              </button>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Achievements">
+            <div className="space-y-6">
+              {profile.achievements.map((achievement, index) => (
+                <div
+                  key={index}
+                  className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xl font-semibold">
+                      Achievement {index + 1}
+                    </h4>
+                    <button
+                      onClick={() => removeArrayItem("achievements", index)}
+                      className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-gray-400 text-sm">Title</label>
+                      <input
+                        value={achievement.title}
+                        onChange={(e) =>
+                          updateArrayItem(
+                            "achievements",
+                            index,
+                            "title",
+                            e.target.value
+                          )
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-gray-400 text-sm">Description</label>
+                      <textarea
+                        value={achievement.description}
+                        onChange={(e) =>
+                          updateArrayItem(
+                            "achievements",
+                            index,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                        rows="4"
+                        className={textareaClass}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={() => addArrayItem("achievements", { ...emptyAchievement })}
+                className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
+              >
+                + Add Achievement
+              </button>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Languages">
+            <div className="space-y-6">
+              {profile.languages.map((language, index) => (
+                <div
+                  key={index}
+                  className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-xl font-semibold">
+                      Language {index + 1}
+                    </h4>
+                    {profile.languages.length > 1 && (
+                      <button
+                        onClick={() => removeArrayItem("languages", index)}
+                        className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="text-gray-400 text-sm">Language</label>
+                      <input
+                        value={language.name}
+                        onChange={(e) =>
+                          updateArrayItem("languages", index, "name", e.target.value)
+                        }
+                        className={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-gray-400 text-sm">Level</label>
+                      <input
+                        value={language.level}
+                        onChange={(e) =>
+                          updateArrayItem("languages", index, "level", e.target.value)
+                        }
+                        placeholder="Native / Good / Fluent"
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                onClick={() => addArrayItem("languages", { ...emptyLanguage })}
+                className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
+              >
+                + Add Language
+              </button>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Resume Preferences">
             <div className="grid md:grid-cols-2 gap-5">
               <div>
                 <label className="text-gray-400 text-sm">Resume Style</label>
@@ -1509,7 +1906,7 @@ ${profile.phone}`,
                 </div>
               ))}
             </div>
-          </div>
+          </SectionCard>
         </div>
       </section>
     </div>
