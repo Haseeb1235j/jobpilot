@@ -1,11 +1,8 @@
 require("dotenv").config()
 
-const dns = require("dns")
-dns.setDefaultResultOrder("ipv4first")
-
 const express = require("express")
 const cors = require("cors")
-const nodemailer = require("nodemailer")
+const { Resend } = require("resend")
 const Groq = require("groq-sdk")
 
 const app = express()
@@ -18,6 +15,8 @@ const PORT = process.env.PORT || 5000
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 })
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 let chatHistory = [
   {
@@ -166,7 +165,7 @@ app.get("/jobs", async (req, res) => {
 
 app.post("/send-email", async (req, res) => {
   try {
-    console.log("📩 Send email request received")
+    console.log("📩 Resend email request received")
 
     const { to, subject, body } = req.body
 
@@ -179,58 +178,47 @@ app.post("/send-email", async (req, res) => {
       })
     }
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.log("❌ Missing EMAIL_USER or EMAIL_PASS in environment")
+    if (!process.env.RESEND_API_KEY) {
+      console.log("❌ Missing RESEND_API_KEY in Render environment")
 
       return res.status(500).json({
         success: false,
-        error: "Email environment variables missing",
+        error: "RESEND_API_KEY is missing",
       })
     }
 
-    console.log("📨 Sending email to:", to)
-    console.log("📧 Email user:", process.env.EMAIL_USER)
+    console.log("📨 Sending email with Resend to:", to)
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      family: 4,
-      connectionTimeout: 30000,
-      greetingTimeout: 30000,
-      socketTimeout: 30000,
-      tls: {
-        servername: "smtp.gmail.com",
-      },
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    })
-
-    await transporter.verify()
-    console.log("✅ Gmail transporter verified")
-
-    const info = await transporter.sendMail({
-      from: `"JobPilot" <${process.env.EMAIL_USER}>`,
-      to,
+    const { data, error } = await resend.emails.send({
+      from: "JobPilot <onboarding@resend.dev>",
+      to: [to],
       subject,
       text: body,
+      html: `<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111;">
+        ${body.replace(/\n/g, "<br />")}
+      </div>`,
     })
 
-    console.log("✅ Email sent:", info.messageId)
+    if (error) {
+      console.error("❌ RESEND ERROR:")
+      console.error(error)
+
+      return res.status(500).json({
+        success: false,
+        error: error.message || "Resend email failed",
+        details: error,
+      })
+    }
+
+    console.log("✅ Email sent with Resend:", data)
 
     res.json({
       success: true,
       message: "Email sent successfully",
-      messageId: info.messageId,
+      id: data?.id,
     })
   } catch (error) {
     console.error("❌ EMAIL SEND ERROR:")
-    console.error("Message:", error.message)
-    console.error("Code:", error.code)
-    console.error("Command:", error.command)
     console.error(error)
 
     res.status(500).json({
