@@ -65,7 +65,8 @@ app.get("/", (req, res) => {
 
 app.post("/agent", async (req, res) => {
   try {
-    const { message, profile, selectedJob, savedApplications } = req.body
+    const { message, profile, selectedJob, savedApplications, searchPreferences } =
+      req.body
 
     if (!message) {
       return res.status(400).json({
@@ -135,6 +136,7 @@ Important behavior rules:
 9. Do not claim fake experience.
 10. Improve the wording professionally, but stay truthful to the user's details.
 11. Use simple formatting with clear headings.
+12. If salary data is not available in a job, say salary is not listed. Do not invent salary.
 
 User Profile:
 Name: ${profile?.name || "Not provided"}
@@ -142,7 +144,7 @@ Target Role: ${profile?.role || "Not provided"}
 Email: ${profile?.email || "Not provided"}
 Phone: ${profile?.phone || "Not provided"}
 Portfolio/GitHub: ${profile?.portfolio || "Not provided"}
-Skills: ${profile?.skills || "Not provided"}
+Skills: ${profile?.skills || profile?.technicalSkills || "Not provided"}
 Experience: ${profile?.experience || "Not provided"}
 Projects: ${profile?.projects || "Not provided"}
 
@@ -152,6 +154,13 @@ Company: ${selectedJob?.company || "No selected company"}
 Location: ${selectedJob?.location || "No selected location"}
 Salary: ${selectedJob?.salary || "Not listed"}
 Description: ${selectedJob?.description || "No job description available"}
+
+Search Preferences:
+Role: ${searchPreferences?.role || "Not provided"}
+Location: ${searchPreferences?.location || "Not provided"}
+Country: ${searchPreferences?.country || "Not provided"}
+Experience: ${searchPreferences?.experience || "Not provided"}
+Salary Range: ${searchPreferences?.salaryRange || "Not provided"}
 
 Saved Applications Count: ${savedApplications?.length || 0}
 `
@@ -202,6 +211,12 @@ app.post("/chat", async (req, res) => {
       })
     }
 
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({
+        error: "GROQ_API_KEY is missing",
+      })
+    }
+
     const completion = await groq.chat.completions.create({
       model: "llama-3.1-8b-instant",
       messages: [
@@ -237,8 +252,12 @@ app.post("/chat", async (req, res) => {
 
 app.get("/jobs", async (req, res) => {
   try {
-    const role = req.query.role || "frontend developer"
-    const location = req.query.location || "india"
+    const role = req.query.role || "Frontend Developer"
+    const location = req.query.location || ""
+    const country = req.query.country || "in"
+    const salaryRequired = req.query.salaryRequired === "true"
+    const salaryMin = Number(req.query.salaryMin || 0)
+    const salaryMax = Number(req.query.salaryMax || 0)
 
     if (!process.env.ADZUNA_APP_ID || !process.env.ADZUNA_APP_KEY) {
       return res.status(500).json({
@@ -247,13 +266,41 @@ app.get("/jobs", async (req, res) => {
       })
     }
 
-    const url = `https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=${
-      process.env.ADZUNA_APP_ID
-    }&app_key=${
-      process.env.ADZUNA_APP_KEY
-    }&results_per_page=10&what=${encodeURIComponent(
-      role
-    )}&where=${encodeURIComponent(location)}&content-type=application/json`
+    const allowedCountries = [
+      "in",
+      "us",
+      "gb",
+      "ca",
+      "au",
+      "de",
+      "fr",
+      "nz",
+      "za",
+      "br",
+      "pl",
+      "at",
+    ]
+
+    const safeCountry = allowedCountries.includes(country) ? country : "in"
+
+    const params = new URLSearchParams({
+      app_id: process.env.ADZUNA_APP_ID,
+      app_key: process.env.ADZUNA_APP_KEY,
+      results_per_page: "50",
+      what: role,
+      where: location,
+      "content-type": "application/json",
+    })
+
+    if (salaryRequired && salaryMin > 0) {
+      params.append("salary_min", String(salaryMin))
+    }
+
+    if (salaryRequired && salaryMax > 0) {
+      params.append("salary_max", String(salaryMax))
+    }
+
+    const url = `https://api.adzuna.com/v1/api/jobs/${safeCountry}/search/1?${params.toString()}`
 
     const response = await fetch(url)
     const data = await response.json()
@@ -269,27 +316,64 @@ app.get("/jobs", async (req, res) => {
       })
     }
 
-    const jobs = (data.results || []).map((job) => ({
-      id: job.id,
-      title: job.title || "Job title not listed",
-      company: job.company?.display_name || "Company not listed",
-      location: job.location?.display_name || "Location not listed",
-      salary:
-        job.salary_min && job.salary_max
-          ? `${job.salary_min} - ${job.salary_max}`
-          : "Salary not listed",
-      description: job.description || "No description available",
-      url: job.redirect_url,
-      created: job.created,
-      category: job.category?.label || "IT Jobs",
-      source: "Adzuna",
-    }))
+    const rawJobs = data.results || []
+
+    const jobs = rawJobs
+      .map((job) => {
+        const salaryMinValue = job.salary_min || null
+        const salaryMaxValue = job.salary_max || null
+        const hasSalary = Boolean(salaryMinValue || salaryMaxValue)
+
+        return {
+          id: job.id,
+          title: job.title || "Job title not listed",
+          company: job.company?.display_name || "Company not listed",
+          location: job.location?.display_name || "Location not listed",
+          country: safeCountry,
+          salaryMin: salaryMinValue,
+          salaryMax: salaryMaxValue,
+          salaryAvailable: hasSalary,
+          salaryPredicted:
+            job.salary_is_predicted === "1" || job.salary_is_predicted === 1,
+          salary: hasSalary
+            ? `${salaryMinValue ? salaryMinValue : ""}${
+                salaryMinValue && salaryMaxValue ? " - " : ""
+              }${salaryMaxValue ? salaryMaxValue : ""}`
+            : "Salary not listed",
+          description: job.description || "No description available",
+          url: job.redirect_url || "",
+          created: job.created || "",
+          category: job.category?.label || "Job",
+          source: "Adzuna",
+        }
+      })
+      .filter((job) => {
+        if (!salaryRequired) return true
+        if (!job.salaryAvailable) return false
+
+        const min = job.salaryMin || job.salaryMax || 0
+        const max = job.salaryMax || job.salaryMin || 0
+
+        if (salaryMin > 0 && max < salaryMin) return false
+        if (salaryMax > 0 && min > salaryMax) return false
+
+        return true
+      })
 
     res.json({
       success: true,
       role,
       location,
+      country: safeCountry,
+      salaryRequired,
+      salaryMin,
+      salaryMax,
+      totalFromApi: rawJobs.length,
       count: jobs.length,
+      message:
+        salaryRequired && jobs.length === 0
+          ? "No salary-listed jobs found for this range/location."
+          : "",
       jobs,
     })
   } catch (error) {

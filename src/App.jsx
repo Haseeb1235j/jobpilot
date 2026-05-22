@@ -1,17 +1,44 @@
+import { useState, useRef, useEffect, useMemo } from "react"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://jobpilot-backend-mcv7.onrender.com"
 
-const salaryRanges = [
-  "Any Salary",
-  "0 - 3 LPA",
-  "3 - 6 LPA",
-  "6 - 10 LPA",
-  "10 - 15 LPA",
-  "15 - 25 LPA",
-  "25+ LPA",
+const countryOptions = [
+  { code: "in", name: "India", currency: "INR", label: "₹ / LPA" },
+  { code: "us", name: "United States", currency: "USD", label: "$ / year" },
+  { code: "gb", name: "United Kingdom", currency: "GBP", label: "£ / year" },
+  { code: "ca", name: "Canada", currency: "CAD", label: "C$ / year" },
+  { code: "au", name: "Australia", currency: "AUD", label: "A$ / year" },
+  { code: "de", name: "Germany", currency: "EUR", label: "€ / year" },
+  { code: "fr", name: "France", currency: "EUR", label: "€ / year" },
+  { code: "nz", name: "New Zealand", currency: "NZD", label: "NZ$ / year" },
+  { code: "za", name: "South Africa", currency: "ZAR", label: "R / year" },
+  { code: "br", name: "Brazil", currency: "BRL", label: "R$ / year" },
+  { code: "pl", name: "Poland", currency: "PLN", label: "zł / year" },
+  { code: "at", name: "Austria", currency: "EUR", label: "€ / year" },
 ]
+
+const salaryRanges = {
+  in: [
+    { label: "Any Salary", min: 0, max: 0, required: false },
+    { label: "Only salary-listed jobs", min: 0, max: 0, required: true },
+    { label: "0 - 3 LPA", min: 0, max: 300000, required: true },
+    { label: "3 - 6 LPA", min: 300000, max: 600000, required: true },
+    { label: "6 - 10 LPA", min: 600000, max: 1000000, required: true },
+    { label: "10 - 15 LPA", min: 1000000, max: 1500000, required: true },
+    { label: "15 - 25 LPA", min: 1500000, max: 2500000, required: true },
+    { label: "25+ LPA", min: 2500000, max: 0, required: true },
+  ],
+  default: [
+    { label: "Any Salary", min: 0, max: 0, required: false },
+    { label: "Only salary-listed jobs", min: 0, max: 0, required: true },
+    { label: "Entry range", min: 0, max: 50000, required: true },
+    { label: "50k - 80k", min: 50000, max: 80000, required: true },
+    { label: "80k - 120k", min: 80000, max: 120000, required: true },
+    { label: "120k+", min: 120000, max: 0, required: true },
+  ],
+}
 
 const resumeTemplates = [
   {
@@ -942,7 +969,8 @@ function App() {
 
   const [search, setSearch] = useState({
     role: "Frontend Developer",
-    location: "India",
+    location: "Hyderabad",
+    country: "in",
     experience: "Fresher",
     salaryRange: "Any Salary",
   })
@@ -1061,29 +1089,13 @@ function App() {
   }
 
   const getSalaryScore = (job) => {
-    if (search.salaryRange === "Any Salary") return 0
+    const activeRanges = salaryRanges[search.country] || salaryRanges.default
+    const selectedSalary =
+      activeRanges.find((range) => range.label === search.salaryRange) ||
+      activeRanges[0]
 
-    const salaryText = `${job.salary || ""} ${job.description || ""}`.toLowerCase()
-    const selected = search.salaryRange.toLowerCase()
-
-    if (!salaryText || salaryText.includes("not listed")) return -3
-
-    const salaryMap = {
-      "0 - 3": ["0", "1", "2", "3"],
-      "3 - 6": ["3", "4", "5", "6"],
-      "6 - 10": ["6", "7", "8", "9", "10"],
-      "10 - 15": ["10", "11", "12", "13", "14", "15"],
-      "15 - 25": ["15", "18", "20", "25"],
-      "25+": ["25", "30", "40", "50"],
-    }
-
-    for (const [range, numbers] of Object.entries(salaryMap)) {
-      if (selected.includes(range.toLowerCase())) {
-        return numbers.some((n) => salaryText.includes(n)) ? 8 : -5
-      }
-    }
-
-    return 0
+    if (!selectedSalary.required) return 0
+    return job.salaryAvailable ? 8 : -20
   }
 
   const projectsText = useMemo(() => {
@@ -1240,20 +1252,51 @@ Description: ${exp.description}`
     .map((job) => ({ ...job, matchScore: calculateMatch(job) }))
     .sort((a, b) => b.matchScore - a.matchScore)
 
+  const getActiveSalaryRanges = () => {
+    return salaryRanges[search.country] || salaryRanges.default
+  }
+
+  const getSelectedSalaryRange = () => {
+    return (
+      getActiveSalaryRanges().find((range) => range.label === search.salaryRange) ||
+      getActiveSalaryRanges()[0]
+    )
+  }
+
+  const getSelectedCountry = () => {
+    return (
+      countryOptions.find((country) => country.code === search.country) ||
+      countryOptions[0]
+    )
+  }
+
   const findJobs = async () => {
     setLoadingJobs(true)
     setJobError("")
     setJobs([])
 
     try {
-      const role = encodeURIComponent(search.role)
-      const location = encodeURIComponent(search.location)
-      const res = await fetch(`${API_URL}/jobs?role=${role}&location=${location}`)
+      const selectedSalary = getSelectedSalaryRange()
+
+      const params = new URLSearchParams({
+        role: search.role,
+        location: search.location,
+        country: search.country,
+        salaryRequired: String(selectedSalary.required),
+        salaryMin: String(selectedSalary.min),
+        salaryMax: String(selectedSalary.max),
+      })
+
+      const res = await fetch(`${API_URL}/jobs?${params.toString()}`)
       const data = await res.json()
 
       if (!res.ok) throw new Error(data.error || "Failed to load jobs")
 
       setJobs(data.jobs || [])
+
+      if (data.message) {
+        setJobError(data.message)
+      }
     } catch (error) {
       console.error("Job loading error:", error)
       setJobError("Could not load jobs. Make sure backend is running.")
@@ -1327,13 +1370,17 @@ ${profile.phone}`,
       company: job.company,
       location: job.location,
       salary: job.salary || "Salary not listed",
+      salaryAvailable: Boolean(job.salaryAvailable),
+      salaryMin: job.salaryMin || null,
+      salaryMax: job.salaryMax || null,
+      country: job.country || search.country,
       category: job.category || "Real Job",
       url: job.url,
       description: job.description,
       match: `${job.matchScore}%`,
       status: "Ready",
       date: new Date().toLocaleDateString(),
-      note: `Salary preference: ${search.salaryRange}`,
+      note: `Salary filter: ${search.salaryRange}`,
     }
 
     setSelectedJob(cleanJob)
@@ -1515,6 +1562,7 @@ ${profile.phone}`,
           searchPreferences: {
             role: search.role,
             location: search.location,
+            country: search.country,
             experience: search.experience,
             salaryRange: search.salaryRange,
             salaryPreference: getSalaryRangeText(search.salaryRange),
@@ -2069,7 +2117,7 @@ ${profile.phone}`,
           description="Search real jobs from your backend connected to Adzuna."
         />
 
-        <div className="grid lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid lg:grid-cols-6 gap-4 mb-6">
           <SearchBox label="Role">
             <input
               value={search.role}
@@ -2080,12 +2128,36 @@ ${profile.phone}`,
             />
           </SearchBox>
 
+          <SearchBox label="Country">
+            <select
+              value={search.country}
+              onChange={(e) => {
+                const nextCountry = e.target.value
+                const nextRanges = salaryRanges[nextCountry] || salaryRanges.default
+
+                setSearch((prev) => ({
+                  ...prev,
+                  country: nextCountry,
+                  salaryRange: nextRanges[0].label,
+                }))
+              }}
+              className={inputClass}
+            >
+              {countryOptions.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
+            </select>
+          </SearchBox>
+
           <SearchBox label="Location">
             <input
               value={search.location}
               onChange={(e) =>
                 setSearch((prev) => ({ ...prev, location: e.target.value }))
               }
+              placeholder="City or Remote"
               className={inputClass}
             />
           </SearchBox>
@@ -2106,7 +2178,7 @@ ${profile.phone}`,
             </select>
           </SearchBox>
 
-          <SearchBox label="Salary / CTC">
+          <SearchBox label={`Salary / CTC (${getSelectedCountry().label})`}>
             <select
               value={search.salaryRange}
               onChange={(e) =>
@@ -2114,8 +2186,8 @@ ${profile.phone}`,
               }
               className={inputClass}
             >
-              {salaryRanges.map((range) => (
-                <option key={range}>{range}</option>
+              {getActiveSalaryRanges().map((range) => (
+                <option key={range.label}>{range.label}</option>
               ))}
             </select>
           </SearchBox>
@@ -2155,8 +2227,20 @@ ${profile.phone}`,
 
               <div className="space-y-2 text-gray-400 text-sm mb-4">
                 <p>📍 {job.location}</p>
-                <p>💰 {job.salary}</p>
-                <p>🎚️ Preference: {search.salaryRange}</p>
+                <p>
+                  💰{" "}
+                  {job.salaryAvailable ? (
+                    <span className="text-green-300">{job.salary}</span>
+                  ) : (
+                    <span className="text-yellow-300">Salary not listed</span>
+                  )}
+                </p>
+                <p>
+                  🎚️ Filter: {search.salaryRange}
+                  {getSelectedSalaryRange().required && (
+                    <span className="text-green-300"> • salary verified</span>
+                  )}
+                </p>
                 <p>🏷️ {job.category}</p>
               </div>
 
