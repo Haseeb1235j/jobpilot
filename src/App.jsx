@@ -16,6 +16,16 @@ const emptyCertification = { name: "", issuer: "", year: "", link: "" }
 const emptyAchievement = { title: "", description: "" }
 const emptyLanguage = { name: "", level: "" }
 
+const salaryRanges = [
+  "Any Salary",
+  "0 - 3 LPA",
+  "3 - 6 LPA",
+  "6 - 10 LPA",
+  "10 - 15 LPA",
+  "15 - 25 LPA",
+  "25+ LPA",
+]
+
 const defaultProfile = {
   name: "Mohammad Haseeb",
   role: "Frontend Developer",
@@ -269,6 +279,7 @@ function App() {
     role: "Frontend Developer",
     location: "India",
     experience: "Fresher",
+    salaryRange: "Any Salary",
   })
 
   const [jobs, setJobs] = useState([])
@@ -492,6 +503,91 @@ Description: ${exp.description}`
     return profile.projects.find((project) => project.name) || emptyProject
   }
 
+  const getSalaryRangeText = (range) => {
+    if (range === "Any Salary") return "No specific salary preference"
+    return range
+  }
+
+  const getSalaryScore = (job) => {
+    if (search.salaryRange === "Any Salary") return 0
+
+    const salaryText = `${job.salary || ""} ${job.description || ""}`.toLowerCase()
+    const selected = search.salaryRange.toLowerCase()
+
+    if (!salaryText || salaryText.includes("not listed")) return -3
+
+    if (selected.includes("0 - 3")) {
+      if (
+        salaryText.includes("0") ||
+        salaryText.includes("1") ||
+        salaryText.includes("2") ||
+        salaryText.includes("3")
+      ) {
+        return 8
+      }
+    }
+
+    if (selected.includes("3 - 6")) {
+      if (
+        salaryText.includes("3") ||
+        salaryText.includes("4") ||
+        salaryText.includes("5") ||
+        salaryText.includes("6")
+      ) {
+        return 8
+      }
+    }
+
+    if (selected.includes("6 - 10")) {
+      if (
+        salaryText.includes("6") ||
+        salaryText.includes("7") ||
+        salaryText.includes("8") ||
+        salaryText.includes("9") ||
+        salaryText.includes("10")
+      ) {
+        return 8
+      }
+    }
+
+    if (selected.includes("10 - 15")) {
+      if (
+        salaryText.includes("10") ||
+        salaryText.includes("11") ||
+        salaryText.includes("12") ||
+        salaryText.includes("13") ||
+        salaryText.includes("14") ||
+        salaryText.includes("15")
+      ) {
+        return 8
+      }
+    }
+
+    if (selected.includes("15 - 25")) {
+      if (
+        salaryText.includes("15") ||
+        salaryText.includes("18") ||
+        salaryText.includes("20") ||
+        salaryText.includes("25")
+      ) {
+        return 8
+      }
+    }
+
+    if (selected.includes("25+")) {
+      if (
+        salaryText.includes("25") ||
+        salaryText.includes("30") ||
+        salaryText.includes("40") ||
+        salaryText.includes("50")
+      ) {
+        return 8
+      }
+    }
+
+    return -5
+  }
+
   const calculateMatch = (job) => {
     const skills = profile.technicalSkills
       .toLowerCase()
@@ -518,6 +614,8 @@ Description: ${exp.description}`
       if (text.includes("5 years")) score -= 18
       if (text.includes("3 to 6 years")) score -= 12
     }
+
+    score += getSalaryScore(job)
 
     if (score > 98) score = 98
     if (score < 35) score = 35
@@ -564,7 +662,7 @@ I am excited to apply for the ${job.title} role at ${job.company}. My background
 
 One of my key projects is ${mainProject.name}, where I worked on ${mainProject.description}
 
-I am interested in this opportunity because it matches my goal of growing as a ${profile.role}. I am motivated, quick to learn, and ready to contribute with strong effort and practical skills.
+I am interested in this opportunity because it matches my goal of growing as a ${profile.role}. My salary preference is ${getSalaryRangeText(search.salaryRange)}, and I am open to discussing compensation based on the role, responsibilities, and growth opportunity. I am motivated, quick to learn, and ready to contribute with strong effort and practical skills.
 
 Thank you for reviewing my application. I would be happy to discuss how my skills and projects match this position.
 
@@ -582,7 +680,8 @@ ${profile.portfolio}`
 4. Use keywords from the job description.
 5. Add action words like Built, Developed, Integrated, Improved.
 6. Keep resume clean and one page if applying as fresher.
-7. Add portfolio/GitHub link near contact details.`
+7. Add portfolio/GitHub link near contact details.
+8. Salary preference selected: ${search.salaryRange}.`
 
     return { coverLetter, resumeTips }
   }
@@ -601,6 +700,8 @@ I am writing to apply for the ${job.title} position at ${job.company}. I have ex
 One of my key projects is ${mainProject.name}, where I gained practical experience in frontend development, backend integration, API usage, and deployment.
 
 I am a quick learner, motivated to improve, and excited to contribute to your team.
+
+My salary preference is ${getSalaryRangeText(search.salaryRange)}, and I am open to discussing compensation based on the role, responsibilities, and growth opportunity.
 
 Portfolio/GitHub: ${profile.portfolio}
 
@@ -623,9 +724,10 @@ ${profile.phone}`,
       url: job.url,
       description: job.description,
       match: `${job.matchScore}%`,
+      salaryPreference: search.salaryRange,
       status: "Ready",
       date: new Date().toLocaleDateString(),
-      note: "",
+      note: `Salary preference: ${search.salaryRange}`,
     }
 
     setSelectedJob(cleanJob)
@@ -709,6 +811,13 @@ ${profile.phone}`,
           profile: profileForAI,
           selectedJob,
           savedApplications,
+          searchPreferences: {
+            role: search.role,
+            location: search.location,
+            experience: search.experience,
+            salaryRange: search.salaryRange,
+            salaryPreference: getSalaryRangeText(search.salaryRange),
+          },
         }),
       })
 
@@ -802,7 +911,7 @@ ${profile.phone}`,
         job.location === selectedJob.location
           ? {
               ...job,
-              note: `Opened Gmail draft for ${recipientEmail}`,
+              note: `Opened Gmail draft for ${recipientEmail}. Salary preference: ${search.salaryRange}`,
             }
           : job
       )
@@ -1056,7 +1165,7 @@ ${profile.phone}`,
                 type="button"
                 onClick={() =>
                   quickAskAgent(
-                    "Create a personalized 30-day skill improvement roadmap for my target role based on my current skills, education, and projects."
+                    "Create a personalized 30-day skill improvement roadmap for my target role based on my current skills, education, projects, and salary preference."
                   )
                 }
                 className="w-full bg-blue-600 hover:bg-blue-700 py-3 px-4 rounded-xl text-left font-semibold"
@@ -1080,7 +1189,7 @@ ${profile.phone}`,
                 type="button"
                 onClick={() =>
                   quickAskAgent(
-                    "Generate a short professional application email for the selected job using my full candidate profile. Make it human, clean, and not repetitive."
+                    "Generate a short professional application email for the selected job using my full candidate profile and salary preference. Make it human, clean, and not repetitive."
                   )
                 }
                 className="w-full bg-pink-600 hover:bg-pink-700 py-3 px-4 rounded-xl text-left font-semibold"
@@ -1192,7 +1301,7 @@ ${profile.phone}`,
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-5 mb-8">
+        <div className="grid lg:grid-cols-5 gap-5 mb-8">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <label className="text-gray-400 text-sm">Role</label>
             <input
@@ -1232,6 +1341,21 @@ ${profile.phone}`,
             </select>
           </div>
 
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+            <label className="text-gray-400 text-sm">Salary / CTC</label>
+            <select
+              value={search.salaryRange}
+              onChange={(e) =>
+                setSearch((prev) => ({ ...prev, salaryRange: e.target.value }))
+              }
+              className={inputClass}
+            >
+              {salaryRanges.map((range) => (
+                <option key={range}>{range}</option>
+              ))}
+            </select>
+          </div>
+
           <button
             type="button"
             onClick={findJobs}
@@ -1268,6 +1392,7 @@ ${profile.phone}`,
               <div className="space-y-2 text-gray-400 text-sm mb-5">
                 <p>📍 {job.location}</p>
                 <p>💰 {job.salary}</p>
+                <p>🎚️ Preference: {search.salaryRange}</p>
                 <p>🏷️ {job.category}</p>
               </div>
 
@@ -1323,6 +1448,7 @@ ${profile.phone}`,
               <div className="space-y-3 text-gray-400">
                 <p>📍 {selectedJob.location}</p>
                 <p>💰 {selectedJob.salary}</p>
+                <p>🎚️ Preference: {selectedJob.salaryPreference || search.salaryRange}</p>
                 <p>🎯 {selectedJob.match} Match</p>
                 <p>📌 Status: {selectedJob.status}</p>
               </div>
