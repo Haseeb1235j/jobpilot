@@ -2,50 +2,25 @@ require("dotenv").config()
 
 const express = require("express")
 const cors = require("cors")
-const Groq = require("groq-sdk")
 const nodemailer = require("nodemailer")
+const Groq = require("groq-sdk")
 
 const app = express()
-const PORT = process.env.PORT || 5000
 
 app.use(cors())
-app.use(express.json())
+app.use(express.json({ limit: "10mb" }))
+
+const PORT = process.env.PORT || 5000
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 })
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-})
-
 let chatHistory = [
   {
     role: "system",
-    content: `
-You are JobPilot AI, a smart career assistant.
-
-Your job:
-- Help users with resumes
-- Help users find jobs
-- Create cover letters
-- Create follow-up emails
-- Prepare interview questions
-- Give skill roadmaps
-- Give job application strategies
-
-Formatting rules:
-- Use clear headings
-- Use bullet points
-- Keep answers practical
-- Do not give messy paragraphs
-- Do not pretend you searched live internet unless real job data is provided
-- Be friendly and helpful
-`,
+    content:
+      "You are JobPilot AI, a friendly career assistant. Help users with jobs, resumes, cover letters, applications, interview preparation, and career planning. Be friendly and helpful.",
   },
 ]
 
@@ -70,31 +45,13 @@ app.post("/chat", async (req, res) => {
       chatHistory = [
         {
           role: "system",
-          content: `
-You are JobPilot AI, a smart career assistant.
-
-Your job:
-- Help users with resumes
-- Help users find jobs
-- Create cover letters
-- Create follow-up emails
-- Prepare interview questions
-- Give skill roadmaps
-- Give job application strategies
-
-Formatting rules:
-- Use clear headings
-- Use bullet points
-- Keep answers practical
-- Do not give messy paragraphs
-- Do not pretend you searched live internet unless real job data is provided
-- Be friendly and helpful
-`,
+          content:
+            "You are JobPilot AI, a friendly career assistant. Help users with jobs, resumes, cover letters, applications, interview preparation, and career planning. Be friendly and helpful.",
         },
       ]
 
       return res.json({
-        reply: "Chat memory cleared ✅",
+        reply: "Memory cleared ✅",
       })
     }
 
@@ -107,12 +64,12 @@ Formatting rules:
       model: "llama-3.1-8b-instant",
       messages: chatHistory,
       temperature: 0.7,
-      max_tokens: 900,
+      max_tokens: 800,
     })
 
     const reply =
       completion.choices?.[0]?.message?.content ||
-      "Sorry, I could not generate a reply."
+      "Sorry, I could not generate a response."
 
     chatHistory.push({
       role: "assistant",
@@ -120,18 +77,17 @@ Formatting rules:
     })
 
     if (chatHistory.length > 20) {
-      chatHistory = [chatHistory[0], ...chatHistory.slice(-19)]
+      chatHistory = [chatHistory[0], ...chatHistory.slice(-18)]
     }
 
-    res.json({
-      reply,
-    })
+    res.json({ reply })
   } catch (error) {
-    console.error("Chat error:", error)
+    console.error("❌ CHAT ERROR:")
+    console.error(error)
 
     res.status(500).json({
-      reply:
-        "Something went wrong with the AI chat. Please check the backend terminal.",
+      error: "Chat failed",
+      details: error.message,
     })
   }
 })
@@ -140,56 +96,45 @@ app.get("/jobs", async (req, res) => {
   try {
     const role = req.query.role || "frontend developer"
     const location = req.query.location || "india"
-    const country = req.query.country || "in"
 
-    const appId = process.env.ADZUNA_APP_ID
-    const appKey = process.env.ADZUNA_APP_KEY
-
-    if (!appId || !appKey) {
+    if (!process.env.ADZUNA_APP_ID || !process.env.ADZUNA_APP_KEY) {
       return res.status(500).json({
-        error: "Missing Adzuna API keys in .env file",
+        success: false,
+        error: "Adzuna API keys are missing",
       })
     }
 
-    const url = new URL(
-      `https://api.adzuna.com/v1/api/jobs/${country}/search/1`
-    )
-
-    url.searchParams.append("app_id", appId)
-    url.searchParams.append("app_key", appKey)
-    url.searchParams.append("what", role)
-    url.searchParams.append("where", location)
-    url.searchParams.append("results_per_page", "10")
-    url.searchParams.append("content-type", "application/json")
+    const url = `https://api.adzuna.com/v1/api/jobs/in/search/1?app_id=${process.env.ADZUNA_APP_ID}&app_key=${process.env.ADZUNA_APP_KEY}&results_per_page=10&what=${encodeURIComponent(
+      role
+    )}&where=${encodeURIComponent(location)}&content-type=application/json`
 
     const response = await fetch(url)
+    const data = await response.json()
 
     if (!response.ok) {
-      const errorText = await response.text()
-
-      console.error("Adzuna API error:", errorText)
+      console.error("❌ ADZUNA ERROR:")
+      console.error(data)
 
       return res.status(response.status).json({
-        error: "Adzuna API request failed",
-        details: errorText,
+        success: false,
+        error: "Adzuna API failed",
+        details: data,
       })
     }
-
-    const data = await response.json()
 
     const jobs = (data.results || []).map((job) => ({
       id: job.id,
-      title: job.title || "No title",
-      company: job.company?.display_name || "Unknown company",
-      location: job.location?.display_name || location,
+      title: job.title || "Job title not listed",
+      company: job.company?.display_name || "Company not listed",
+      location: job.location?.display_name || "Location not listed",
       salary:
         job.salary_min && job.salary_max
-          ? `${Math.round(job.salary_min)} - ${Math.round(job.salary_max)}`
+          ? `${job.salary_min} - ${job.salary_max}`
           : "Salary not listed",
       description: job.description || "No description available",
       url: job.redirect_url,
       created: job.created,
-      category: job.category?.label || "General",
+      category: job.category?.label || "IT Jobs",
       source: "Adzuna",
     }))
 
@@ -201,53 +146,80 @@ app.get("/jobs", async (req, res) => {
       jobs,
     })
   } catch (error) {
-    console.error("Jobs route error:", error)
+    console.error("❌ JOBS ERROR:")
+    console.error(error)
 
     res.status(500).json({
-      error: "Something went wrong while searching jobs",
+      success: false,
+      error: "Could not fetch jobs",
+      details: error.message,
     })
   }
 })
 
 app.post("/send-email", async (req, res) => {
   try {
+    console.log("📩 Send email request received")
+
     const { to, subject, body } = req.body
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      return res.status(500).json({
-        success: false,
-        error: "Missing EMAIL_USER or EMAIL_PASS in .env file",
-      })
-    }
-
     if (!to || !subject || !body) {
+      console.log("❌ Missing email fields")
+
       return res.status(400).json({
         success: false,
-        error: "To, subject, and body are required",
+        error: "Missing to, subject, or body",
       })
     }
 
-    const mailOptions = {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.log("❌ Missing EMAIL_USER or EMAIL_PASS in environment")
+
+      return res.status(500).json({
+        success: false,
+        error: "Email environment variables missing",
+      })
+    }
+
+    console.log("📨 Sending email to:", to)
+    console.log("📧 Email user:", process.env.EMAIL_USER)
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    })
+
+    await transporter.verify()
+    console.log("✅ Gmail transporter verified")
+
+    const info = await transporter.sendMail({
       from: `"JobPilot" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text: body,
-    }
+    })
 
-    const info = await transporter.sendMail(mailOptions)
+    console.log("✅ Email sent:", info.messageId)
 
     res.json({
       success: true,
-      message: "Email sent successfully ✅",
+      message: "Email sent successfully",
       messageId: info.messageId,
     })
   } catch (error) {
-    console.error("Send email error:", error)
+    console.error("❌ EMAIL SEND ERROR:")
+    console.error("Message:", error.message)
+    console.error("Code:", error.code)
+    console.error("Command:", error.command)
+    console.error(error)
 
     res.status(500).json({
       success: false,
-      error:
-        "Failed to send email. Check backend terminal and Gmail app password.",
+      error: error.message,
+      code: error.code || "UNKNOWN_ERROR",
     })
   }
 })
