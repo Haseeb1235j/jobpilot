@@ -259,12 +259,17 @@ ${profile.portfolio}`,
 
   const sendEmail = async () => {
     if (!selectedJob || !emailDraft) {
-      alert("Select a job first.")
+      setEmailStatus("Please select a job first.")
       return
     }
 
     if (!recipientEmail.trim()) {
-      alert("Enter recipient email.")
+      setEmailStatus("Please enter recipient email.")
+      return
+    }
+
+    if (!emailDraft.subject || !emailDraft.body) {
+      setEmailStatus("Please check subject and body before sending.")
       return
     }
 
@@ -278,19 +283,31 @@ ${profile.portfolio}`,
     setEmailStatus("Sending email...")
 
     try {
+      console.log("API_URL:", API_URL)
+      console.log("Sending email to:", recipientEmail)
+
       const res = await fetch(`${API_URL}/send-email`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          to: recipientEmail,
+          to: recipientEmail.trim(),
           subject: emailDraft.subject,
           body: emailDraft.body,
         }),
       })
 
-      const data = await res.json()
+      let data = {}
+
+      try {
+        data = await res.json()
+      } catch (jsonError) {
+        console.error("Could not read JSON response:", jsonError)
+        throw new Error("Backend did not return JSON response")
+      }
+
+      console.log("Email response:", data)
 
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Email failed")
@@ -314,12 +331,11 @@ ${profile.portfolio}`,
         )
       )
     } catch (error) {
-      setEmailStatus(
-        "Email failed ❌ Check backend terminal, Gmail app password, and recipient email."
-      )
+      console.error("Frontend email error:", error)
+      setEmailStatus(`Email failed ❌ ${error.message}`)
+    } finally {
+      setSendingEmail(false)
     }
-
-    setSendingEmail(false)
   }
 
   const copyToClipboard = async (text, key) => {
