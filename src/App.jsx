@@ -13,6 +13,24 @@ const salaryRanges = [
   "25+ LPA",
 ]
 
+const resumeTemplates = [
+  {
+    id: "ats-blue",
+    name: "ATS Blue Line",
+    description: "Clean ATS-friendly resume",
+  },
+  {
+    id: "modern-sidebar",
+    name: "Modern Sidebar",
+    description: "Stylish sidebar resume",
+  },
+  {
+    id: "elegant-minimal",
+    name: "Elegant Minimal",
+    description: "Premium minimal resume",
+  },
+]
+
 const emptyProject = { name: "", description: "", tech: "", link: "" }
 const emptyEducation = { degree: "", college: "", branch: "", year: "", score: "" }
 const emptyExperience = {
@@ -175,7 +193,7 @@ function markdownToProfessionalHtml(text) {
   safe = safe
     .replace(/^### (.*$)/gim, "<h3>$1</h3>")
     .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-    .replace(/^# (.*$)/gim, "<h1>$1</h1>")
+    .replace(/^# (.*$)/gim, "<h2>$1</h2>")
     .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
     .replace(/^\- (.*$)/gim, "<li>$1</li>")
     .replace(/\n\n/g, "</p><p>")
@@ -184,9 +202,117 @@ function markdownToProfessionalHtml(text) {
   return safe
 }
 
-function getProfessionalDocumentHtml(text, profile) {
+function getProfessionalDocumentHtml(text, profile, template = "ats-blue") {
   const title = getDocumentTitle(text, profile)
   const body = markdownToProfessionalHtml(text)
+
+  const contactLine = [
+    profile?.email,
+    profile?.phone,
+    profile?.location,
+    profile?.github,
+    profile?.portfolio,
+  ]
+    .filter(Boolean)
+    .join(" | ")
+
+  if (template === "modern-sidebar") {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { margin:0; background:#e5e7eb; font-family:Arial, Helvetica, sans-serif; color:#1f2937; }
+    .page { max-width:900px; margin:24px auto; background:white; display:grid; grid-template-columns:245px 1fr; min-height:1080px; box-shadow:0 18px 45px rgba(0,0,0,0.12); }
+    .hero { grid-column:1 / 3; background:#334155; color:white; padding:32px 42px; }
+    .hero h1 { margin:0; font-size:32px; letter-spacing:2px; text-transform:uppercase; }
+    .hero p { margin:6px 0 0; font-size:15px; text-transform:uppercase; }
+    .sidebar { background:#e5e7eb; padding:34px 24px; border-right:1px solid #cbd5e1; }
+    .main { padding:34px 42px; }
+    h2 { color:#334155; font-size:15px; margin-top:22px; margin-bottom:10px; letter-spacing:3px; text-transform:uppercase; border-bottom:2px solid #64748b; padding-bottom:6px; }
+    h3 { font-size:14px; margin-top:15px; color:#111827; }
+    p, li { font-size:12.8px; line-height:1.58; }
+    li { margin-left:17px; }
+    .contact-item { font-size:12px; line-height:1.6; margin-bottom:7px; word-break:break-word; }
+    strong { color:#111827; }
+    @media print { body { background:white; } .page { margin:0; max-width:none; box-shadow:none; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <h1>${escapeHtml(profile?.name || "Candidate Name")}</h1>
+      <p>${escapeHtml(profile?.role || "Target Role")}</p>
+    </div>
+
+    <aside class="sidebar">
+      <h2>Contact</h2>
+      <div class="contact-item">${escapeHtml(profile?.email || "Email not provided")}</div>
+      <div class="contact-item">${escapeHtml(profile?.phone || "Phone not provided")}</div>
+      <div class="contact-item">${escapeHtml(profile?.location || "Location not provided")}</div>
+      <div class="contact-item">${escapeHtml(profile?.github || "GitHub not provided")}</div>
+      <div class="contact-item">${escapeHtml(profile?.portfolio || "Portfolio not provided")}</div>
+
+      <h2>Skills</h2>
+      <p>${escapeHtml(profile?.technicalSkills || "Not provided")}</p>
+
+      <h2>Tools</h2>
+      <p>${escapeHtml(profile?.tools || "Not provided")}</p>
+
+      <h2>Languages</h2>
+      <p>${escapeHtml(
+        Array.isArray(profile?.languages)
+          ? profile.languages
+              .map((lang) => `${lang.name}${lang.level ? ` - ${lang.level}` : ""}`)
+              .join(", ")
+          : "Not provided"
+      )}</p>
+    </aside>
+
+    <main class="main">
+      <p>${body}</p>
+    </main>
+  </div>
+</body>
+</html>`
+  }
+
+  if (template === "elegant-minimal") {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body { margin:0; background:#f8fafc; font-family:Georgia, "Times New Roman", serif; color:#222; }
+    .page { max-width:860px; margin:24px auto; background:white; padding:48px 58px; border-radius:12px; box-shadow:0 18px 45px rgba(0,0,0,0.1); }
+    .name { font-family:Arial, Helvetica, sans-serif; font-size:31px; letter-spacing:5px; text-transform:uppercase; font-weight:800; margin-bottom:6px; }
+    .role { font-family:Arial, Helvetica, sans-serif; letter-spacing:3px; color:#6b7280; text-transform:uppercase; margin-bottom:20px; }
+    .line { height:3px; background:#222; margin-bottom:22px; }
+    .contact { font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#4b5563; margin-bottom:22px; line-height:1.5; }
+    h1 { display:none; }
+    h2 { font-family:Arial, Helvetica, sans-serif; font-size:15px; letter-spacing:4px; text-transform:uppercase; margin-top:22px; margin-bottom:9px; color:#333; }
+    h3 { font-family:Arial, Helvetica, sans-serif; font-size:14px; margin-top:14px; }
+    p, li { font-size:13.2px; line-height:1.62; }
+    li { margin-left:17px; }
+    strong { color:#111; }
+    @media print { body { background:white; } .page { margin:0; max-width:none; box-shadow:none; border-radius:0; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="name">${escapeHtml(profile?.name || "Candidate Name")}</div>
+    <div class="role">${escapeHtml(profile?.role || "Target Role")}</div>
+    <div class="line"></div>
+    <div class="contact">${escapeHtml(contactLine || "Contact details not provided")}</div>
+    <p>${body}</p>
+  </div>
+</body>
+</html>`
+  }
 
   return `
 <!DOCTYPE html>
@@ -195,78 +321,28 @@ function getProfessionalDocumentHtml(text, profile) {
   <meta charset="UTF-8" />
   <title>${escapeHtml(title)}</title>
   <style>
-    body {
-      margin: 0;
-      background: #f3f4f6;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #111827;
-    }
-
-    .page {
-      max-width: 850px;
-      margin: 30px auto;
-      background: white;
-      padding: 48px 56px;
-      border-radius: 14px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.12);
-    }
-
-    h1 {
-      font-size: 30px;
-      margin: 0 0 10px;
-      color: #111827;
-      border-bottom: 3px solid #2563eb;
-      padding-bottom: 12px;
-    }
-
-    h2 {
-      font-size: 18px;
-      margin-top: 26px;
-      margin-bottom: 10px;
-      color: #1d4ed8;
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: 6px;
-    }
-
-    h3 {
-      font-size: 15px;
-      margin-top: 18px;
-      color: #111827;
-    }
-
-    p {
-      font-size: 14px;
-      line-height: 1.65;
-      margin: 0 0 10px;
-    }
-
-    li {
-      font-size: 14px;
-      line-height: 1.6;
-      margin-left: 18px;
-    }
-
-    strong {
-      color: #111827;
-    }
-
-    @media print {
-      body {
-        background: white;
-      }
-
-      .page {
-        box-shadow: none;
-        margin: 0;
-        max-width: none;
-        border-radius: 0;
-      }
-    }
+    body { margin:0; background:#f3f4f6; font-family:Arial, Helvetica, sans-serif; color:#111827; }
+    .page { max-width:850px; margin:24px auto; background:white; padding:44px 54px; border-radius:14px; box-shadow:0 18px 45px rgba(0,0,0,0.12); }
+    .header { border-bottom:4px solid #1e6091; padding-bottom:13px; margin-bottom:22px; }
+    .name { font-size:33px; color:#1e6091; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+    .role { font-size:15px; font-weight:700; color:#334155; margin-bottom:7px; }
+    .contact { font-size:12px; color:#475569; line-height:1.5; }
+    h1 { display:none; }
+    h2 { font-size:15px; margin-top:22px; margin-bottom:9px; color:#1e6091; text-transform:uppercase; border-bottom:1px solid #9ca3af; padding-bottom:6px; }
+    h3 { font-size:14px; margin-top:15px; color:#111827; }
+    p, li { font-size:13.2px; line-height:1.58; }
+    li { margin-left:17px; }
+    strong { color:#111827; }
+    @media print { body { background:white; } .page { box-shadow:none; margin:0; max-width:none; border-radius:0; } }
   </style>
 </head>
 <body>
   <div class="page">
-    <h1>${escapeHtml(title)}</h1>
+    <div class="header">
+      <div class="name">${escapeHtml(profile?.name || "Candidate Name")}</div>
+      <div class="role">${escapeHtml(profile?.role || "Target Role")}</div>
+      <div class="contact">${escapeHtml(contactLine || "Contact details not provided")}</div>
+    </div>
     <p>${body}</p>
   </div>
 </body>
@@ -335,16 +411,16 @@ function AccordionCard({
   const done = sectionStatus[id]
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpenProfileSection(isOpen ? "" : id)}
-        className="w-full p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left hover:bg-white/5 transition"
+        className="w-full p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 text-left hover:bg-white/5 transition"
       >
         <div>
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{isOpen ? "▾" : "▸"}</span>
-            <h3 className="text-2xl font-bold">{title}</h3>
+            <span className="text-xl">{isOpen ? "▾" : "▸"}</span>
+            <h3 className="text-xl font-bold">{title}</h3>
             <span
               className={`text-xs px-3 py-1 rounded-full ${
                 done
@@ -355,17 +431,189 @@ function AccordionCard({
               {done ? "Done" : "Needs info"}
             </span>
           </div>
-          <p className="text-gray-400 mt-2">{description}</p>
+          <p className="text-gray-400 mt-1 text-sm">{description}</p>
         </div>
 
         {count !== undefined && (
-          <div className="bg-black/30 border border-white/10 rounded-2xl px-4 py-2 text-sm text-gray-300">
+          <div className="bg-black/30 border border-white/10 rounded-xl px-3 py-2 text-xs text-gray-300">
             {count}
           </div>
         )}
       </button>
 
-      {isOpen && <div className="px-6 pb-6">{children}</div>}
+      {isOpen && <div className="px-5 pb-5">{children}</div>}
+    </div>
+  )
+}
+
+function ArraySection({
+  items,
+  section,
+  emptyItem,
+  fields,
+  updateArrayItem,
+  addArrayItem,
+  removeArrayItem,
+  inputClass,
+  textareaClass,
+  title,
+  allowEmptyRemove = false,
+}) {
+  return (
+    <div className="space-y-4">
+      {items.map((item, index) => (
+        <div
+          key={index}
+          className="bg-black/20 border border-white/10 rounded-2xl p-4"
+        >
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-lg font-semibold">
+              {title} {index + 1}
+            </h4>
+
+            {(items.length > 1 || allowEmptyRemove) && (
+              <button
+                type="button"
+                onClick={() => removeArrayItem(section, index)}
+                className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200 text-sm"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {fields.map(([field, label, type]) => (
+              <div key={field}>
+                <label className="text-gray-400 text-sm">{label}</label>
+
+                {type === "textarea" ? (
+                  <textarea
+                    value={item[field]}
+                    onChange={(e) =>
+                      updateArrayItem(section, index, field, e.target.value)
+                    }
+                    rows="4"
+                    className={textareaClass}
+                  />
+                ) : (
+                  <input
+                    value={item[field]}
+                    onChange={(e) =>
+                      updateArrayItem(section, index, field, e.target.value)
+                    }
+                    className={inputClass}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <button
+        type="button"
+        onClick={() => addArrayItem(section, emptyItem)}
+        className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
+      >
+        + Add {title}
+      </button>
+    </div>
+  )
+}
+
+function TemplateSelector({
+  selectedResumeTemplate,
+  setSelectedResumeTemplate,
+}) {
+  return (
+    <div className="mb-4 bg-black/20 border border-white/10 rounded-2xl p-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 className="text-lg font-bold">Choose Resume Template</h3>
+          <p className="text-sm text-gray-400">
+            Pick a professional style before exporting PDF or DOC.
+          </p>
+        </div>
+
+        <span className="text-xs bg-purple-500/20 text-purple-200 px-3 py-1 rounded-full">
+          Selected:{" "}
+          {resumeTemplates.find((template) => template.id === selectedResumeTemplate)
+            ?.name || "ATS Blue Line"}
+        </span>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-3">
+        {resumeTemplates.map((template) => (
+          <button
+            type="button"
+            key={template.id}
+            onClick={() => setSelectedResumeTemplate(template.id)}
+            className={`text-left border rounded-2xl p-3 transition ${
+              selectedResumeTemplate === template.id
+                ? "border-purple-400 bg-purple-600/20"
+                : "border-white/10 bg-white/5 hover:bg-white/10"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <p className="font-bold">{template.name}</p>
+              {selectedResumeTemplate === template.id && (
+                <span className="text-green-300 text-sm">✓</span>
+              )}
+            </div>
+
+            <p className="text-xs text-gray-400 mb-3">{template.description}</p>
+
+            <div className="bg-white rounded-lg h-20 overflow-hidden">
+              {template.id === "ats-blue" && (
+                <div className="p-3">
+                  <div className="h-3 bg-blue-700 w-3/4 mb-2"></div>
+                  <div className="h-1 bg-blue-700 w-full mb-3"></div>
+                  <div className="h-1 bg-gray-400 w-full mb-1"></div>
+                  <div className="h-1 bg-gray-300 w-5/6 mb-1"></div>
+                  <div className="h-1 bg-gray-300 w-4/6"></div>
+                </div>
+              )}
+
+              {template.id === "modern-sidebar" && (
+                <div className="flex h-full">
+                  <div className="w-1/3 bg-gray-300 p-2">
+                    <div className="h-7 w-7 rounded-full bg-white mb-2"></div>
+                    <div className="h-1 bg-gray-600 w-full mb-1"></div>
+                    <div className="h-1 bg-gray-500 w-4/5"></div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-5 bg-slate-700 mb-2"></div>
+                    <div className="p-2">
+                      <div className="h-1 bg-gray-500 w-3/4 mb-2"></div>
+                      <div className="h-1 bg-gray-300 w-full mb-1"></div>
+                      <div className="h-1 bg-gray-300 w-5/6"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {template.id === "elegant-minimal" && (
+                <div className="p-3">
+                  <div className="h-2 bg-gray-800 w-3/4 mb-2"></div>
+                  <div className="h-1 bg-gray-400 w-1/2 mb-3"></div>
+                  <div className="h-1 bg-gray-900 w-full mb-3"></div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="h-1 bg-gray-500 w-4/5 mb-1"></div>
+                      <div className="h-1 bg-gray-300 w-full"></div>
+                    </div>
+                    <div>
+                      <div className="h-1 bg-gray-500 w-4/5 mb-1"></div>
+                      <div className="h-1 bg-gray-300 w-full"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -411,6 +659,8 @@ function App() {
   const [aiInput, setAiInput] = useState("")
   const [aiLoading, setAiLoading] = useState(false)
   const [openProfileSection, setOpenProfileSection] = useState("personal")
+  const [selectedResumeTemplate, setSelectedResumeTemplate] =
+    useState("ats-blue")
 
   const aiChatRef = useRef(null)
   const aiInputRef = useRef(null)
@@ -791,7 +1041,11 @@ ${profile.phone}`,
   }
 
   const exportMessageAsPdf = (text) => {
-    const html = getProfessionalDocumentHtml(text, profile)
+    const html = getProfessionalDocumentHtml(
+      text,
+      profile,
+      selectedResumeTemplate
+    )
     const printWindow = window.open("", "_blank")
 
     if (!printWindow) {
@@ -810,7 +1064,11 @@ ${profile.phone}`,
   }
 
   const exportMessageAsDoc = (text) => {
-    const html = getProfessionalDocumentHtml(text, profile)
+    const html = getProfessionalDocumentHtml(
+      text,
+      profile,
+      selectedResumeTemplate
+    )
     const title = cleanFileName(getDocumentTitle(text, profile))
 
     const blob = new Blob([html], {
@@ -1093,7 +1351,7 @@ ${profile.phone}`,
   return (
     <div className="min-h-screen bg-[#050816] text-white">
       <nav className="sticky top-0 z-50 bg-[#050816]/90 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <h1
             onClick={() => scrollToSection("home")}
             className="text-3xl font-bold text-blue-400 cursor-pointer"
@@ -1121,28 +1379,28 @@ ${profile.phone}`,
         </div>
       </nav>
 
-      <section id="home" className="max-w-7xl mx-auto px-6 py-20">
-        <div className="grid lg:grid-cols-2 gap-10 items-center">
+      <section id="home" className="max-w-7xl mx-auto px-6 py-12">
+        <div className="grid lg:grid-cols-2 gap-8 items-center">
           <div>
-            <p className="text-blue-400 font-semibold mb-4">
+            <p className="text-blue-400 font-semibold mb-3">
               AI Job Applying Assistant
             </p>
 
-            <h2 className="text-6xl font-bold leading-tight mb-6">
+            <h2 className="text-5xl font-bold leading-tight mb-5">
               Build your profile. Ask AI. Apply smarter.
             </h2>
 
-            <p className="text-gray-400 text-xl leading-relaxed mb-8">
+            <p className="text-gray-400 text-lg leading-relaxed mb-6">
               JobPilot helps candidates create resume details, search jobs,
               generate professional resumes, improve skills, prepare for interviews,
               and open Gmail-ready job emails.
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => scrollToSection("profile")}
-                className="bg-green-600 hover:bg-green-700 px-7 py-4 rounded-2xl font-semibold"
+                className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-2xl font-semibold"
               >
                 Fill Resume Details
               </button>
@@ -1150,7 +1408,7 @@ ${profile.phone}`,
               <button
                 type="button"
                 onClick={() => scrollToSection("ai-agent")}
-                className="bg-purple-600 hover:bg-purple-700 px-7 py-4 rounded-2xl font-semibold"
+                className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-2xl font-semibold"
               >
                 Ask JobPilot AI
               </button>
@@ -1158,129 +1416,103 @@ ${profile.phone}`,
               <button
                 type="button"
                 onClick={() => scrollToSection("jobs")}
-                className="bg-blue-600 hover:bg-blue-700 px-7 py-4 rounded-2xl font-semibold"
+                className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-2xl font-semibold"
               >
                 Find Real Jobs
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-5">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <p className="text-gray-400">Profile Score</p>
-              <h3 className="text-5xl font-bold mt-3">{profileScore}%</h3>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <p className="text-gray-400">Jobs Found</p>
-              <h3 className="text-5xl font-bold mt-3">{jobs.length}</h3>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <p className="text-gray-400">Projects</p>
-              <h3 className="text-5xl font-bold mt-3">
-                {profile.projects.length}
-              </h3>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <p className="text-gray-400">Saved</p>
-              <h3 className="text-5xl font-bold mt-3">
-                {savedApplications.length}
-              </h3>
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <StatCard title="Profile Score" value={`${profileScore}%`} />
+            <StatCard title="Jobs Found" value={jobs.length} />
+            <StatCard title="Projects" value={profile.projects.length} />
+            <StatCard title="Saved" value={savedApplications.length} />
           </div>
         </div>
       </section>
 
-      <section id="ai-agent" className="max-w-7xl mx-auto px-6 py-16">
-        <div className="mb-10">
-          <p className="text-purple-400 font-semibold mb-3">JobPilot AI Agent</p>
-          <h2 className="text-5xl font-bold mb-4">Ask AI Anything</h2>
-          <p className="text-gray-400 text-lg">
-            Generate resumes, improve skills, prepare for interviews, create job emails,
-            and get personal career guidance using your candidate details.
-          </p>
-        </div>
+      <section id="ai-agent" className="max-w-7xl mx-auto px-6 py-10">
+        <SectionHeader
+          label="JobPilot AI Agent"
+          title="Ask AI Anything"
+          description="Generate resumes, improve skills, prepare for interviews, create job emails, and get personal career guidance."
+        />
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-fit">
-            <h3 className="text-2xl font-bold mb-5">Quick AI Actions</h3>
+        <div className="grid lg:grid-cols-[360px_1fr] gap-6">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-5 h-fit">
+            <h3 className="text-2xl font-bold mb-4">Quick AI Actions</h3>
 
             <div className="space-y-3">
-              <button
-                type="button"
+              <ActionButton
+                color="purple"
                 onClick={() =>
                   quickAskAgent(
                     "Generate a complete professional ATS-friendly resume using my candidate profile details. Format it cleanly with these sections: Contact Information, Professional Summary, Technical Skills, Tools, Education, Projects, Experience, Certifications, Achievements, Languages. Make it polished, truthful, and ready to export as PDF or Word. Do not add fake details. If important details are missing, write 'Not provided' instead of inventing."
                   )
                 }
-                className="w-full bg-purple-600 hover:bg-purple-700 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Generate Full Resume
-              </button>
+              </ActionButton>
 
-              <button
-                type="button"
+              <ActionButton
+                color="gray"
                 onClick={() =>
                   quickAskAgent(
                     "Check my candidate profile and tell me what resume details are missing or weak. Give exact improvements."
                   )
                 }
-                className="w-full bg-white/10 hover:bg-white/20 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Check Missing Details
-              </button>
+              </ActionButton>
 
-              <button
-                type="button"
+              <ActionButton
+                color="blue"
                 onClick={() =>
                   quickAskAgent(
                     "Create a personalized 30-day skill improvement roadmap for my target role based on my current skills, education, projects, and salary preference."
                   )
                 }
-                className="w-full bg-blue-600 hover:bg-blue-700 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Improve My Skills
-              </button>
+              </ActionButton>
 
-              <button
-                type="button"
+              <ActionButton
+                color="green"
                 onClick={() =>
                   quickAskAgent(
                     "Prepare me for interviews for my target role. Give common questions, strong sample answers, and practice advice based on my skills and projects."
                   )
                 }
-                className="w-full bg-green-600 hover:bg-green-700 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Interview Prep
-              </button>
+              </ActionButton>
 
-              <button
-                type="button"
+              <ActionButton
+                color="pink"
                 onClick={() =>
                   quickAskAgent(
                     "Generate a short professional application email for the selected job using my full candidate profile and salary preference. Make it human, clean, and not repetitive."
                   )
                 }
-                className="w-full bg-pink-600 hover:bg-pink-700 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Generate Email for Job
-              </button>
+              </ActionButton>
 
-              <button
-                type="button"
-                onClick={clearAiChat}
-                className="w-full bg-red-500/20 hover:bg-red-500/30 py-3 px-4 rounded-xl text-left font-semibold text-red-200"
-              >
+              <ActionButton color="red" onClick={clearAiChat}>
                 Clear AI Chat
-              </button>
+              </ActionButton>
             </div>
           </div>
 
-          <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+            <TemplateSelector
+              selectedResumeTemplate={selectedResumeTemplate}
+              setSelectedResumeTemplate={setSelectedResumeTemplate}
+            />
+
             {latestAi && (
-              <div className="mb-5 bg-gradient-to-r from-purple-600/25 to-blue-600/25 border border-purple-400/30 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="mb-4 bg-gradient-to-r from-purple-600/25 to-blue-600/25 border border-purple-400/30 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <p className="text-sm text-purple-200 font-semibold">
                     Latest professional document is ready
@@ -1320,15 +1552,15 @@ ${profile.phone}`,
 
             <div
               ref={aiChatRef}
-              className="h-[520px] overflow-y-auto space-y-4 pr-2 mb-5 scroll-smooth"
+              className="h-[500px] overflow-y-auto space-y-4 pr-2 mb-4 scroll-smooth"
             >
               {aiMessages.map((msg, index) => (
                 <div
                   key={index}
                   className={`rounded-2xl overflow-hidden leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-blue-600/20 border border-blue-400/20 ml-10"
-                      : "bg-black/30 border border-white/10 mr-10"
+                      ? "bg-blue-600/20 border border-blue-400/20 ml-8"
+                      : "bg-black/30 border border-white/10 mr-8"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10 bg-white/5">
@@ -1352,7 +1584,7 @@ ${profile.phone}`,
                             onClick={() => exportMessageAsPdf(msg.text)}
                             className="bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg text-xs font-semibold"
                           >
-                            Export PDF
+                            PDF
                           </button>
 
                           <button
@@ -1360,7 +1592,7 @@ ${profile.phone}`,
                             onClick={() => exportMessageAsDoc(msg.text)}
                             className="bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg text-xs font-semibold"
                           >
-                            Export DOC
+                            DOC
                           </button>
                         </>
                       )}
@@ -1374,7 +1606,7 @@ ${profile.phone}`,
               ))}
 
               {aiLoading && (
-                <div className="bg-black/30 border border-white/10 rounded-2xl p-4 mr-10">
+                <div className="bg-black/30 border border-white/10 rounded-2xl p-4 mr-8">
                   <p className="text-gray-300">JobPilot AI is thinking...</p>
                 </div>
               )}
@@ -1406,7 +1638,7 @@ ${profile.phone}`,
               </button>
             </div>
 
-            <div className="flex flex-wrap gap-3 mt-4">
+            <div className="flex flex-wrap gap-3 mt-3">
               <button
                 type="button"
                 onClick={() => {
@@ -1430,18 +1662,15 @@ ${profile.phone}`,
         </div>
       </section>
 
-      <section id="jobs" className="max-w-7xl mx-auto px-6 py-16">
-        <div className="mb-10">
-          <p className="text-blue-400 font-semibold mb-3">Step 1</p>
-          <h2 className="text-5xl font-bold mb-4">Find Real Jobs</h2>
-          <p className="text-gray-400 text-lg">
-            Search real jobs from your backend connected to Adzuna.
-          </p>
-        </div>
+      <section id="jobs" className="max-w-7xl mx-auto px-6 py-10">
+        <SectionHeader
+          label="Step 1"
+          title="Find Real Jobs"
+          description="Search real jobs from your backend connected to Adzuna."
+        />
 
-        <div className="grid lg:grid-cols-5 gap-5 mb-8">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <label className="text-gray-400 text-sm">Role</label>
+        <div className="grid lg:grid-cols-5 gap-4 mb-6">
+          <SearchBox label="Role">
             <input
               value={search.role}
               onChange={(e) =>
@@ -1449,10 +1678,9 @@ ${profile.phone}`,
               }
               className={inputClass}
             />
-          </div>
+          </SearchBox>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <label className="text-gray-400 text-sm">Location</label>
+          <SearchBox label="Location">
             <input
               value={search.location}
               onChange={(e) =>
@@ -1460,10 +1688,9 @@ ${profile.phone}`,
               }
               className={inputClass}
             />
-          </div>
+          </SearchBox>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <label className="text-gray-400 text-sm">Experience</label>
+          <SearchBox label="Experience">
             <select
               value={search.experience}
               onChange={(e) =>
@@ -1477,10 +1704,9 @@ ${profile.phone}`,
               <option>1-2 Years</option>
               <option>2+ Years</option>
             </select>
-          </div>
+          </SearchBox>
 
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
-            <label className="text-gray-400 text-sm">Salary / CTC</label>
+          <SearchBox label="Salary / CTC">
             <select
               value={search.salaryRange}
               onChange={(e) =>
@@ -1492,7 +1718,7 @@ ${profile.phone}`,
                 <option key={range}>{range}</option>
               ))}
             </select>
-          </div>
+          </SearchBox>
 
           <button
             type="button"
@@ -1505,21 +1731,21 @@ ${profile.phone}`,
         </div>
 
         {jobError && (
-          <div className="bg-red-500/20 border border-red-400/20 text-red-200 rounded-2xl p-5 mb-8">
+          <div className="bg-red-500/20 border border-red-400/20 text-red-200 rounded-2xl p-4 mb-6">
             {jobError}
           </div>
         )}
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {rankedJobs.map((job) => (
             <div
               key={job.id}
-              className="bg-white/5 border border-white/10 rounded-3xl p-6 hover:border-blue-500 transition"
+              className="bg-white/5 border border-white/10 rounded-3xl p-5 hover:border-blue-500 transition"
             >
               <div className="flex justify-between gap-4 mb-4">
                 <div>
-                  <h3 className="text-2xl font-bold">{job.title}</h3>
-                  <p className="text-gray-400 mt-2">{job.company}</p>
+                  <h3 className="text-xl font-bold">{job.title}</h3>
+                  <p className="text-gray-400 mt-1">{job.company}</p>
                 </div>
 
                 <span className="h-fit bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-sm">
@@ -1527,14 +1753,14 @@ ${profile.phone}`,
                 </span>
               </div>
 
-              <div className="space-y-2 text-gray-400 text-sm mb-5">
+              <div className="space-y-2 text-gray-400 text-sm mb-4">
                 <p>📍 {job.location}</p>
                 <p>💰 {job.salary}</p>
                 <p>🎚️ Preference: {search.salaryRange}</p>
                 <p>🏷️ {job.category}</p>
               </div>
 
-              <p className="text-gray-300 text-sm leading-relaxed h-28 overflow-hidden mb-5">
+              <p className="text-gray-300 text-sm leading-relaxed h-24 overflow-hidden mb-4">
                 {job.description}
               </p>
 
@@ -1560,27 +1786,25 @@ ${profile.phone}`,
         </div>
       </section>
 
-      <section id="workspace" className="max-w-7xl mx-auto px-6 py-16">
-        <div className="mb-10">
-          <p className="text-blue-400 font-semibold mb-3">Step 2</p>
-          <h2 className="text-5xl font-bold mb-4">Application Workspace</h2>
-          <p className="text-gray-400 text-lg">
-            Review the selected job, copy materials, or open Gmail with the email ready.
-          </p>
-        </div>
+      <section id="workspace" className="max-w-7xl mx-auto px-6 py-10">
+        <SectionHeader
+          label="Step 2"
+          title="Application Workspace"
+          description="Review selected job, copy materials, or open Gmail with a ready email."
+        />
 
         {!selectedJob ? (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-10 text-center text-gray-400">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8 text-center text-gray-400">
             Select a job using Apply AI.
           </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-fit">
-              <p className="text-blue-400 font-semibold mb-3">Selected Job</p>
-              <h3 className="text-3xl font-bold mb-3">{selectedJob.title}</h3>
-              <p className="text-gray-300 text-xl mb-5">{selectedJob.company}</p>
+          <div className="grid lg:grid-cols-3 gap-5">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-5 h-fit">
+              <p className="text-blue-400 font-semibold mb-2">Selected Job</p>
+              <h3 className="text-2xl font-bold mb-2">{selectedJob.title}</h3>
+              <p className="text-gray-300 text-lg mb-4">{selectedJob.company}</p>
 
-              <div className="space-y-3 text-gray-400">
+              <div className="space-y-2 text-gray-400">
                 <p>📍 {selectedJob.location}</p>
                 <p>💰 {selectedJob.salary}</p>
                 <p>🎚️ Salary Preference: {search.salaryRange}</p>
@@ -1591,14 +1815,14 @@ ${profile.phone}`,
               <button
                 type="button"
                 onClick={() => window.open(selectedJob.url, "_blank")}
-                className="w-full mt-6 bg-white/10 hover:bg-white/20 py-3 rounded-xl"
+                className="w-full mt-5 bg-white/10 hover:bg-white/20 py-3 rounded-xl"
               >
                 Open Job Page
               </button>
             </div>
 
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+            <div className="lg:col-span-2 space-y-5">
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
                 <h3 className="text-2xl font-bold mb-4">Email Draft</h3>
 
                 <label className="text-gray-400 text-sm">Recipient Email</label>
@@ -1627,15 +1851,15 @@ ${profile.phone}`,
                   onChange={(e) =>
                     setEmailDraft((prev) => ({ ...prev, body: e.target.value }))
                   }
-                  rows="12"
+                  rows="10"
                   className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-4 outline-none leading-relaxed focus:border-blue-400 transition"
                 />
 
-                <div className="grid md:grid-cols-3 gap-4 mt-5">
+                <div className="grid md:grid-cols-3 gap-3 mt-4">
                   <button
                     type="button"
                     onClick={openInGmail}
-                    className="bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-semibold"
+                    className="bg-blue-600 hover:bg-blue-700 py-3 rounded-xl font-semibold"
                   >
                     Open in Gmail
                   </button>
@@ -1654,7 +1878,7 @@ ${profile.phone}`,
                         )
                       )
                     }}
-                    className="bg-green-600 hover:bg-green-700 py-4 rounded-xl font-semibold"
+                    className="bg-green-600 hover:bg-green-700 py-3 rounded-xl font-semibold"
                   >
                     Mark Applied
                   </button>
@@ -1668,56 +1892,36 @@ ${profile.phone}`,
                       setRecipientEmail("")
                       setEmailStatus("")
                     }}
-                    className="bg-red-500/20 hover:bg-red-500/30 py-4 rounded-xl font-semibold"
+                    className="bg-red-500/20 hover:bg-red-500/30 py-3 rounded-xl font-semibold"
                   >
                     Clear
                   </button>
                 </div>
 
                 {emailStatus && (
-                  <div className="mt-5 bg-white/10 border border-white/10 rounded-xl p-4">
+                  <div className="mt-4 bg-white/10 border border-white/10 rounded-xl p-4">
                     {emailStatus}
                   </div>
                 )}
               </div>
 
               {applicationPack && (
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-                    <div className="flex justify-between mb-4">
-                      <h3 className="text-xl font-bold">Cover Letter</h3>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyToClipboard(applicationPack.coverLetter, "cover")
-                        }
-                        className="bg-white/10 px-3 py-1 rounded-lg text-sm"
-                      >
-                        {copied === "cover" ? "Copied ✅" : "Copy"}
-                      </button>
-                    </div>
-                    <p className="text-gray-300 text-sm whitespace-pre-line max-h-80 overflow-y-auto">
-                      {applicationPack.coverLetter}
-                    </p>
-                  </div>
+                <div className="grid md:grid-cols-2 gap-5">
+                  <MiniCopyCard
+                    title="Cover Letter"
+                    text={applicationPack.coverLetter}
+                    copied={copied}
+                    copyKey="cover"
+                    onCopy={copyToClipboard}
+                  />
 
-                  <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-                    <div className="flex justify-between mb-4">
-                      <h3 className="text-xl font-bold">Resume Tips</h3>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyToClipboard(applicationPack.resumeTips, "tips")
-                        }
-                        className="bg-white/10 px-3 py-1 rounded-lg text-sm"
-                      >
-                        {copied === "tips" ? "Copied ✅" : "Copy"}
-                      </button>
-                    </div>
-                    <p className="text-gray-300 text-sm whitespace-pre-line max-h-80 overflow-y-auto">
-                      {applicationPack.resumeTips}
-                    </p>
-                  </div>
+                  <MiniCopyCard
+                    title="Resume Tips"
+                    text={applicationPack.resumeTips}
+                    copied={copied}
+                    copyKey="tips"
+                    onCopy={copyToClipboard}
+                  />
                 </div>
               )}
             </div>
@@ -1725,15 +1929,14 @@ ${profile.phone}`,
         )}
       </section>
 
-      <section id="tracker" className="max-w-7xl mx-auto px-6 py-16">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-5 mb-10">
-          <div>
-            <p className="text-blue-400 font-semibold mb-3">Step 3</p>
-            <h2 className="text-5xl font-bold mb-4">Application Tracker</h2>
-            <p className="text-gray-400 text-lg">
-              Track jobs you prepared, emailed, or applied for.
-            </p>
-          </div>
+      <section id="tracker" className="max-w-7xl mx-auto px-6 py-10">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
+          <SectionHeader
+            label="Step 3"
+            title="Application Tracker"
+            description="Track jobs you prepared, emailed, or applied for."
+            compact
+          />
 
           <div className="flex gap-3">
             <button
@@ -1755,20 +1958,20 @@ ${profile.phone}`,
         </div>
 
         {savedApplications.length === 0 ? (
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-10 text-center text-gray-400">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8 text-center text-gray-400">
             No applications yet.
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {savedApplications.map((job, index) => (
               <div
                 key={`${job.title}-${job.company}-${job.location}-${index}`}
-                className="bg-white/5 border border-white/10 rounded-3xl p-6"
+                className="bg-white/5 border border-white/10 rounded-3xl p-5"
               >
-                <h3 className="text-2xl font-bold">{job.title}</h3>
-                <p className="text-gray-400 mt-2">{job.company}</p>
+                <h3 className="text-xl font-bold">{job.title}</h3>
+                <p className="text-gray-400 mt-1">{job.company}</p>
 
-                <div className="space-y-2 text-gray-400 mt-5">
+                <div className="space-y-2 text-gray-400 mt-4">
                   <p>📍 {job.location}</p>
                   <p>🎯 {job.match} Match</p>
                   <p>📅 {job.date}</p>
@@ -1787,7 +1990,7 @@ ${profile.phone}`,
                   <option>Selected</option>
                 </select>
 
-                <div className="grid grid-cols-3 gap-3 mt-5">
+                <div className="grid grid-cols-3 gap-3 mt-4">
                   <button
                     type="button"
                     onClick={() => {
@@ -1826,28 +2029,23 @@ ${profile.phone}`,
         )}
       </section>
 
-      <section id="profile" className="max-w-7xl mx-auto px-6 py-16 pb-28">
-        <div className="mb-10">
-          <p className="text-blue-400 font-semibold mb-3">
-            Candidate Resume Details
-          </p>
-          <h2 className="text-5xl font-bold mb-4">Complete Your Profile</h2>
-          <p className="text-gray-400 text-lg">
-            Open one section at a time, add multiple projects or experiences,
-            and let AI generate professional results.
-          </p>
-        </div>
+      <section id="profile" className="max-w-7xl mx-auto px-6 py-10 pb-20">
+        <SectionHeader
+          label="Candidate Resume Details"
+          title="Complete Your Profile"
+          description="Open one section at a time, add multiple projects or experiences, and let AI generate professional results."
+        />
 
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-8">
-          <div className="grid md:grid-cols-4 gap-5 items-center">
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-6">
+          <div className="grid md:grid-cols-4 gap-4 items-center">
             <div>
               <p className="text-gray-400 text-sm">Profile Score</p>
-              <h3 className="text-5xl font-bold mt-2">{profileScore}%</h3>
+              <h3 className="text-4xl font-bold mt-1">{profileScore}%</h3>
             </div>
 
             <div>
               <p className="text-gray-400 text-sm">Completed Sections</p>
-              <h3 className="text-4xl font-bold mt-2">
+              <h3 className="text-3xl font-bold mt-1">
                 {completedSections}/{totalSections}
               </h3>
             </div>
@@ -1859,7 +2057,7 @@ ${profile.phone}`,
                   "Check my candidate profile and tell me what resume details are missing or weak. Give exact improvements."
                 )
               }
-              className="bg-white/10 hover:bg-white/20 py-4 rounded-2xl font-semibold"
+              className="bg-white/10 hover:bg-white/20 py-3 rounded-2xl font-semibold"
             >
               Check Missing Details
             </button>
@@ -1871,13 +2069,13 @@ ${profile.phone}`,
                   "Generate a complete professional ATS-friendly resume using my candidate profile details. Format it cleanly with these sections: Contact Information, Professional Summary, Technical Skills, Tools, Education, Projects, Experience, Certifications, Achievements, Languages. Make it polished, truthful, and ready to export as PDF or Word. Do not add fake details. If important details are missing, write 'Not provided' instead of inventing."
                 )
               }
-              className="bg-purple-600 hover:bg-purple-700 py-4 rounded-2xl font-semibold"
+              className="bg-purple-600 hover:bg-purple-700 py-3 rounded-2xl font-semibold"
             >
               Generate Resume with AI
             </button>
           </div>
 
-          <div className="w-full bg-black/30 rounded-full h-3 mt-6 overflow-hidden">
+          <div className="w-full bg-black/30 rounded-full h-3 mt-5 overflow-hidden">
             <div
               className="bg-green-500 h-3 rounded-full transition-all"
               style={{ width: `${profileScore}%` }}
@@ -1885,9 +2083,9 @@ ${profile.phone}`,
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-[280px_1fr] gap-6">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-5 h-fit sticky top-28">
-            <h3 className="text-xl font-bold mb-4">Sections</h3>
+        <div className="grid lg:grid-cols-[260px_1fr] gap-5">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-4 h-fit sticky top-24">
+            <h3 className="text-lg font-bold mb-3">Sections</h3>
 
             <div className="space-y-2">
               {[
@@ -1919,14 +2117,14 @@ ${profile.phone}`,
             </div>
           </div>
 
-          <div className="space-y-5">
+          <div className="space-y-4">
             <AccordionCard
               id="personal"
               title="Personal Details"
               description="Basic identity and contact details."
               {...accordionProps}
             >
-              <div className="grid md:grid-cols-2 gap-5">
+              <div className="grid md:grid-cols-2 gap-4">
                 {[
                   ["name", "Full Name"],
                   ["role", "Target Role"],
@@ -1969,7 +2167,7 @@ ${profile.phone}`,
               description="Technical skills, soft skills, and tools."
               {...accordionProps}
             >
-              <div className="grid md:grid-cols-3 gap-5">
+              <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-gray-400 text-sm">Technical Skills</label>
                   <textarea
@@ -1993,9 +2191,7 @@ ${profile.phone}`,
                 </div>
 
                 <div>
-                  <label className="text-gray-400 text-sm">
-                    Tools / Technologies
-                  </label>
+                  <label className="text-gray-400 text-sm">Tools</label>
                   <textarea
                     value={profile.tools}
                     onChange={(e) => updateProfile("tools", e.target.value)}
@@ -2066,26 +2262,28 @@ ${profile.phone}`,
               count={`${profile.experiences.length} item(s)`}
               {...accordionProps}
             >
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {profile.experiences.map((exp, index) => (
                   <div
                     key={index}
-                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                    className="bg-black/20 border border-white/10 rounded-2xl p-4"
                   >
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">Experience {index + 1}</h4>
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="text-lg font-semibold">
+                        Experience {index + 1}
+                      </h4>
                       {profile.experiences.length > 1 && (
                         <button
                           type="button"
                           onClick={() => removeArrayItem("experiences", index)}
-                          className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
+                          className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200 text-sm"
                         >
                           Remove
                         </button>
                       )}
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-5">
+                    <div className="grid md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-gray-400 text-sm">
                           Experience Type
@@ -2243,7 +2441,7 @@ ${profile.phone}`,
               description="Resume style and job preferences."
               {...accordionProps}
             >
-              <div className="grid md:grid-cols-2 gap-5">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-gray-400 text-sm">Resume Style</label>
                   <select
@@ -2281,78 +2479,71 @@ ${profile.phone}`,
   )
 }
 
-function ArraySection({
-  items,
-  section,
-  emptyItem,
-  fields,
-  updateArrayItem,
-  addArrayItem,
-  removeArrayItem,
-  inputClass,
-  textareaClass,
-  title,
-  allowEmptyRemove = false,
-}) {
+function StatCard({ title, value }) {
   return (
-    <div className="space-y-5">
-      {items.map((item, index) => (
-        <div
-          key={index}
-          className="bg-black/20 border border-white/10 rounded-2xl p-5"
+    <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+      <p className="text-gray-400">{title}</p>
+      <h3 className="text-4xl font-bold mt-2">{value}</h3>
+    </div>
+  )
+}
+
+function SectionHeader({ label, title, description, compact = false }) {
+  return (
+    <div className={compact ? "" : "mb-8"}>
+      <p className="text-blue-400 font-semibold mb-2">{label}</p>
+      <h2 className="text-4xl font-bold mb-3">{title}</h2>
+      <p className="text-gray-400 text-lg">{description}</p>
+    </div>
+  )
+}
+
+function SearchBox({ label, children }) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
+      <label className="text-gray-400 text-sm">{label}</label>
+      {children}
+    </div>
+  )
+}
+
+function ActionButton({ color, onClick, children }) {
+  const colors = {
+    purple: "bg-purple-600 hover:bg-purple-700",
+    gray: "bg-white/10 hover:bg-white/20",
+    blue: "bg-blue-600 hover:bg-blue-700",
+    green: "bg-green-600 hover:bg-green-700",
+    pink: "bg-pink-600 hover:bg-pink-700",
+    red: "bg-red-500/20 hover:bg-red-500/30 text-red-100",
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full ${colors[color]} py-3 px-4 rounded-xl text-left font-semibold`}
+    >
+      {children}
+    </button>
+  )
+}
+
+function MiniCopyCard({ title, text, copied, copyKey, onCopy }) {
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-3xl p-5">
+      <div className="flex justify-between mb-4">
+        <h3 className="text-xl font-bold">{title}</h3>
+        <button
+          type="button"
+          onClick={() => onCopy(text, copyKey)}
+          className="bg-white/10 px-3 py-1 rounded-lg text-sm"
         >
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-xl font-semibold">
-              {title} {index + 1}
-            </h4>
-
-            {(items.length > 1 || allowEmptyRemove) && (
-              <button
-                type="button"
-                onClick={() => removeArrayItem(section, index)}
-                className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
-              >
-                Remove
-              </button>
-            )}
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-5">
-            {fields.map(([field, label, type]) => (
-              <div key={field} className={type === "textarea" ? "md:col-span-1" : ""}>
-                <label className="text-gray-400 text-sm">{label}</label>
-
-                {type === "textarea" ? (
-                  <textarea
-                    value={item[field]}
-                    onChange={(e) =>
-                      updateArrayItem(section, index, field, e.target.value)
-                    }
-                    rows="4"
-                    className={textareaClass}
-                  />
-                ) : (
-                  <input
-                    value={item[field]}
-                    onChange={(e) =>
-                      updateArrayItem(section, index, field, e.target.value)
-                    }
-                    className={inputClass}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      <button
-        type="button"
-        onClick={() => addArrayItem(section, emptyItem)}
-        className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
-      >
-        + Add {title}
-      </button>
+          {copied === copyKey ? "Copied ✅" : "Copy"}
+        </button>
+      </div>
+      <p className="text-gray-300 text-sm whitespace-pre-line max-h-72 overflow-y-auto">
+        {text}
+      </p>
     </div>
   )
 }
