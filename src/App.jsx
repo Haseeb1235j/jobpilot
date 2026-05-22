@@ -6,18 +6,58 @@ function App() {
   const defaultProfile = {
     name: "Mohammad Haseeb",
     role: "Frontend Developer",
-    email: "haseeb@example.com",
-    phone: "+91 XXXXX XXXXX",
+    email: "haaseebrahman21@gmail.com",
+    phone: "+91 9666050726",
+    location: "Hyderabad, Telangana, India",
+    linkedin: "",
+    github: "github.com/yourusername",
     portfolio: "github.com/yourusername",
-    skills: "React, JavaScript, Tailwind CSS, Python, APIs",
-    experience:
-      "Built JobPilot, an AI career assistant web app with React, Tailwind CSS, Node.js backend, real job search, application tracker, and email preparation system.",
-    projects: "JobPilot AI Career Assistant, Portfolio Website, Resume Builder App",
+
+    summary:
+      "Motivated frontend developer with practical experience building responsive web applications using React, JavaScript, Tailwind CSS, Node.js, and APIs.",
+
+    technicalSkills: "React, JavaScript, HTML, CSS, Tailwind CSS, Python, APIs",
+    softSkills: "Communication, Problem Solving, Quick Learning, Teamwork",
+    tools: "Git, GitHub, VS Code, Vercel, Render",
+
+    degree: "B.Tech",
+    college: "",
+    branch: "",
+    graduationYear: "",
+    cgpa: "",
+
+    project1Name: "JobPilot AI Career Assistant",
+    project1Description:
+      "Built an AI career assistant web app with real job search, application tracking, AI resume help, and Gmail-based application sending.",
+    project1Tech: "React, Tailwind CSS, Node.js, Express, Groq AI, Adzuna API",
+    project1Link: "github.com/yourusername",
+
+    project2Name: "Portfolio Website",
+    project2Description:
+      "Created a personal portfolio website to showcase skills, projects, and contact details.",
+    project2Tech: "React, Tailwind CSS",
+    project2Link: "",
+
+    experienceType: "Fresher",
+    companyName: "",
+    experienceRole: "",
+    experienceDuration: "",
+    experienceDescription:
+      "Built practical projects to improve frontend development, backend integration, API usage, and deployment skills.",
+
+    certifications: "",
+    achievements: "",
+    languages: "English, Hindi, Telugu",
+
+    resumeStyle: "ATS Friendly",
+    preferredLocation: "Hyderabad, Bangalore, Remote",
+    expectedSalary: "",
+    noticePeriod: "Immediate",
   }
 
   const [profile, setProfile] = useState(() => {
     const saved = localStorage.getItem("jobpilot_profile")
-    return saved ? JSON.parse(saved) : defaultProfile
+    return saved ? { ...defaultProfile, ...JSON.parse(saved) } : defaultProfile
   })
 
   const [search, setSearch] = useState({
@@ -51,7 +91,7 @@ function App() {
       : [
           {
             role: "ai",
-            text: "Hi 👋 I am JobPilot AI. I can generate resumes, improve your skills, prepare you for interviews, and create job application emails using your profile details.",
+            text: "Hi 👋 I am JobPilot AI. Fill your Candidate Resume Details, then ask me to generate a professional resume, improve your skills, prepare for interviews, or write a job application email.",
           },
         ]
   })
@@ -82,8 +122,16 @@ function App() {
     setProfile((prev) => ({ ...prev, [field]: value }))
   }
 
+  const profileForAI = {
+    ...profile,
+    skills: profile.technicalSkills,
+    experience: `${profile.experienceType}. ${profile.experienceDescription}`,
+    projects: `${profile.project1Name}: ${profile.project1Description}. Tech: ${profile.project1Tech}. ${profile.project2Name}: ${profile.project2Description}. Tech: ${profile.project2Tech}`,
+    education: `${profile.degree}, ${profile.branch}, ${profile.college}, ${profile.graduationYear}, ${profile.cgpa}`,
+  }
+
   const calculateMatch = (job) => {
-    const skills = profile.skills
+    const skills = profile.technicalSkills
       .toLowerCase()
       .split(",")
       .map((skill) => skill.trim())
@@ -151,9 +199,9 @@ function App() {
   const buildApplicationPack = (job) => {
     const coverLetter = `Dear Hiring Manager,
 
-I am excited to apply for the ${job.title} role at ${job.company}. My background in ${profile.skills} and my hands-on project work make me confident that I can contribute to this role.
+I am excited to apply for the ${job.title} role at ${job.company}. My background in ${profile.technicalSkills} and my hands-on project work make me confident that I can contribute to this role.
 
-I have built projects such as ${profile.projects}. My experience includes ${profile.experience}
+One of my key projects is ${profile.project1Name}, where I worked on ${profile.project1Description}
 
 I am interested in this opportunity because it matches my goal of growing as a ${profile.role}. I am motivated, quick to learn, and ready to contribute with strong effort and practical skills.
 
@@ -169,7 +217,7 @@ ${profile.portfolio}`
 
 I came across the ${job.title} opening at ${job.company}, and I am interested in applying.
 
-I have skills in ${profile.skills}, and I have built projects like ${profile.projects}. I would be grateful if you could review my profile for this opportunity.
+I have skills in ${profile.technicalSkills}, and I have built projects like ${profile.project1Name}. I would be grateful if you could review my profile for this opportunity.
 
 Portfolio/GitHub: ${profile.portfolio}
 
@@ -179,8 +227,8 @@ ${profile.name}`
     const resumeTips = `Resume improvements for this job:
 
 1. Keep your target role close to "${job.title}".
-2. Highlight these skills clearly: ${profile.skills}.
-3. Add strong project points from: ${profile.projects}.
+2. Highlight these skills clearly: ${profile.technicalSkills}.
+3. Add strong project points from: ${profile.project1Name}.
 4. Use keywords from the job description.
 5. Add action words like Built, Developed, Integrated, Improved.
 6. Keep resume clean and one page if applying as fresher.
@@ -207,19 +255,15 @@ ${profile.name}`
   }
 
   const buildEmailDraft = (job) => {
-    const projectLine = profile.projects
-      ? `One of my key projects is ${profile.projects.split(",")[0].trim()}, where I gained practical experience in frontend development, backend integration, and real-world user workflows.`
-      : "I have worked on practical projects that helped me improve my frontend development and problem-solving skills."
-
     return {
       subject: `Application for ${job.title} - ${profile.name}`,
       body: `Dear Hiring Manager,
 
 I hope you are doing well.
 
-I am writing to apply for the ${job.title} position at ${job.company}. I have experience working with ${profile.skills}, and I am interested in this opportunity because it matches my goal of growing as a ${profile.role}.
+I am writing to apply for the ${job.title} position at ${job.company}. I have experience working with ${profile.technicalSkills}, and I am interested in this opportunity because it matches my goal of growing as a ${profile.role}.
 
-${projectLine}
+One of my key projects is ${profile.project1Name}, where I gained practical experience in frontend development, backend integration, API usage, and deployment.
 
 I am a quick learner, motivated to improve, and excited to contribute to your team.
 
@@ -291,7 +335,7 @@ ${profile.phone}`,
         },
         body: JSON.stringify({
           message: cleanMessage,
-          profile,
+          profile: profileForAI,
           selectedJob,
           savedApplications,
         }),
@@ -487,12 +531,22 @@ ${profile.phone}`,
       profile.role,
       profile.email,
       profile.phone,
+      profile.location,
       profile.portfolio,
-      profile.skills,
-      profile.experience,
-      profile.projects,
-    ].filter((x) => x && x.trim().length > 3).length * 12.5
+      profile.technicalSkills,
+      profile.summary,
+      profile.degree,
+      profile.college,
+      profile.project1Name,
+      profile.project1Description,
+      profile.experienceDescription,
+    ].filter((x) => x && x.trim().length > 3).length * 7.7
   )
+
+  const inputClass =
+    "w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+  const textareaClass =
+    "w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
 
   return (
     <div className="min-h-screen bg-[#050816] text-white">
@@ -533,21 +587,21 @@ ${profile.phone}`,
             </p>
 
             <h2 className="text-6xl font-bold leading-tight mb-6">
-              Find jobs. Ask AI. Prepare applications.
+              Build your profile. Ask AI. Apply smarter.
             </h2>
 
             <p className="text-gray-400 text-xl leading-relaxed mb-8">
-              JobPilot helps you search jobs, generate professional resumes,
-              improve skills, prepare for interviews, and open Gmail-ready job
-              application emails.
+              JobPilot helps candidates fill complete resume details, search real jobs,
+              generate professional resumes, improve skills, prepare for interviews,
+              and open Gmail-ready job application emails.
             </p>
 
             <div className="flex flex-wrap gap-4">
               <button
-                onClick={() => scrollToSection("jobs")}
-                className="bg-blue-600 hover:bg-blue-700 px-7 py-4 rounded-2xl font-semibold"
+                onClick={() => scrollToSection("profile")}
+                className="bg-green-600 hover:bg-green-700 px-7 py-4 rounded-2xl font-semibold"
               >
-                Find Real Jobs
+                Fill Resume Details
               </button>
 
               <button
@@ -558,18 +612,18 @@ ${profile.phone}`,
               </button>
 
               <button
-                onClick={() => scrollToSection("tracker")}
-                className="bg-white/10 hover:bg-white/20 px-7 py-4 rounded-2xl font-semibold"
+                onClick={() => scrollToSection("jobs")}
+                className="bg-blue-600 hover:bg-blue-700 px-7 py-4 rounded-2xl font-semibold"
               >
-                View Tracker
+                Find Real Jobs
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-5">
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
-              <p className="text-gray-400">Resume Score</p>
-              <h3 className="text-5xl font-bold mt-3">{resumeScore}%</h3>
+              <p className="text-gray-400">Profile Score</p>
+              <h3 className="text-5xl font-bold mt-3">{Math.min(resumeScore, 100)}%</h3>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
@@ -599,8 +653,8 @@ ${profile.phone}`,
           <p className="text-purple-400 font-semibold mb-3">JobPilot AI Agent</p>
           <h2 className="text-5xl font-bold mb-4">Ask AI Anything</h2>
           <p className="text-gray-400 text-lg">
-            Generate resumes, improve skills, prepare for interviews, create job emails,
-            and get personal career guidance using your profile details.
+            Generate professional resumes, improve skills, prepare for interviews,
+            create job emails, and get personal career guidance using your full candidate details.
           </p>
         </div>
 
@@ -610,35 +664,66 @@ ${profile.phone}`,
 
             <div className="space-y-3">
               <button
-                onClick={() => quickAskAgent("Generate my professional ATS-friendly resume using my profile details. Make it clean, strong, and suitable for my target role.")}
+                onClick={() =>
+                  quickAskAgent(
+                    "Generate my professional ATS-friendly resume using all my candidate profile details. Make it clean, truthful, strong, and suitable for my target role. Include professional summary, skills, education, projects, experience, certifications, achievements, and languages if available."
+                  )
+                }
                 className="w-full bg-purple-600 hover:bg-purple-700 py-3 px-4 rounded-xl text-left font-semibold"
               >
-                Generate Resume
+                Generate Full Resume
               </button>
 
               <button
-                onClick={() => quickAskAgent("Create a personalized 30-day skill improvement roadmap for my target role based on my current skills and projects.")}
+                onClick={() =>
+                  quickAskAgent(
+                    "Check my candidate profile and tell me what resume details are missing or weak. Give exact improvements."
+                  )
+                }
+                className="w-full bg-white/10 hover:bg-white/20 py-3 px-4 rounded-xl text-left font-semibold"
+              >
+                Check Missing Details
+              </button>
+
+              <button
+                onClick={() =>
+                  quickAskAgent(
+                    "Create a personalized 30-day skill improvement roadmap for my target role based on my current skills, education, and projects."
+                  )
+                }
                 className="w-full bg-blue-600 hover:bg-blue-700 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Improve My Skills
               </button>
 
               <button
-                onClick={() => quickAskAgent("Prepare me for interviews for my target role. Give common questions, strong sample answers, and practice advice.")}
+                onClick={() =>
+                  quickAskAgent(
+                    "Prepare me for interviews for my target role. Give common questions, strong sample answers, and practice advice based on my skills and projects."
+                  )
+                }
                 className="w-full bg-green-600 hover:bg-green-700 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Interview Prep
               </button>
 
               <button
-                onClick={() => quickAskAgent("Generate a short professional application email for the selected job using my profile. Make it human, clear, and not repetitive.")}
+                onClick={() =>
+                  quickAskAgent(
+                    "Generate a short professional application email for the selected job using my full candidate profile. Make it human, clean, and not repetitive."
+                  )
+                }
                 className="w-full bg-pink-600 hover:bg-pink-700 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Generate Email for Job
               </button>
 
               <button
-                onClick={() => quickAskAgent("Suggest 5 impressive projects I can build to improve my chances for my target role.")}
+                onClick={() =>
+                  quickAskAgent(
+                    "Suggest 5 impressive projects I can build to improve my chances for my target role. Make them realistic and portfolio-worthy."
+                  )
+                }
                 className="w-full bg-white/10 hover:bg-white/20 py-3 px-4 rounded-xl text-left font-semibold"
               >
                 Project Ideas
@@ -650,14 +735,6 @@ ${profile.phone}`,
               >
                 Clear AI Chat
               </button>
-            </div>
-
-            <div className="mt-6 bg-black/30 border border-white/10 rounded-2xl p-4 text-sm text-gray-300">
-              <p className="font-semibold text-white mb-2">AI uses:</p>
-              <p>✅ Your profile</p>
-              <p>✅ Selected job</p>
-              <p>✅ Saved applications</p>
-              <p>✅ Your target role</p>
             </div>
           </div>
 
@@ -749,7 +826,7 @@ ${profile.phone}`,
               onChange={(e) =>
                 setSearch((prev) => ({ ...prev, role: e.target.value }))
               }
-              className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+              className={inputClass}
             />
           </div>
 
@@ -760,7 +837,7 @@ ${profile.phone}`,
               onChange={(e) =>
                 setSearch((prev) => ({ ...prev, location: e.target.value }))
               }
-              className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+              className={inputClass}
             />
           </div>
 
@@ -771,7 +848,7 @@ ${profile.phone}`,
               onChange={(e) =>
                 setSearch((prev) => ({ ...prev, experience: e.target.value }))
               }
-              className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+              className={inputClass}
             >
               <option>Fresher</option>
               <option>Internship</option>
@@ -878,7 +955,11 @@ ${profile.phone}`,
               </button>
 
               <button
-                onClick={() => quickAskAgent("Generate a short professional application email for the selected job using my profile. Make it human, clean, and not repetitive.")}
+                onClick={() =>
+                  quickAskAgent(
+                    "Generate a short professional application email for the selected job using my full candidate profile. Make it human, clean, and not repetitive."
+                  )
+                }
                 className="w-full mt-3 bg-purple-600 hover:bg-purple-700 py-3 rounded-xl"
               >
                 Ask AI for This Job
@@ -907,10 +988,10 @@ ${profile.phone}`,
                   value={recipientEmail}
                   onChange={(e) => setRecipientEmail(e.target.value)}
                   placeholder="recruiter@company.com"
-                  className="w-full mt-2 mb-4 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+                  className={inputClass}
                 />
 
-                <label className="text-gray-400 text-sm">Subject</label>
+                <label className="text-gray-400 text-sm mt-4 block">Subject</label>
                 <input
                   value={emailDraft.subject}
                   onChange={(e) =>
@@ -919,10 +1000,10 @@ ${profile.phone}`,
                       subject: e.target.value,
                     }))
                   }
-                  className="w-full mt-2 mb-4 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+                  className={inputClass}
                 />
 
-                <label className="text-gray-400 text-sm">Body</label>
+                <label className="text-gray-400 text-sm mt-4 block">Body</label>
                 <textarea
                   value={emailDraft.body}
                   onChange={(e) =>
@@ -1070,7 +1151,7 @@ ${profile.phone}`,
                 <select
                   value={job.status}
                   onChange={(e) => updateApplicationStatus(index, e.target.value)}
-                  className="w-full mt-5 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+                  className={inputClass}
                 >
                   <option>Ready</option>
                   <option>Applied</option>
@@ -1117,61 +1198,316 @@ ${profile.phone}`,
 
       <section id="profile" className="max-w-7xl mx-auto px-6 py-16 pb-28">
         <div className="mb-10">
-          <p className="text-blue-400 font-semibold mb-3">Profile</p>
-          <h2 className="text-5xl font-bold mb-4">Your Resume Details</h2>
+          <p className="text-blue-400 font-semibold mb-3">
+            Candidate Resume Details
+          </p>
+          <h2 className="text-5xl font-bold mb-4">Complete Your Profile</h2>
           <p className="text-gray-400 text-lg">
-            JobPilot AI uses these details to generate resumes, emails, skill plans,
-            and interview preparation.
+            JobPilot AI uses these details to generate professional resumes, emails,
+            interview preparation, and skill roadmaps.
           </p>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
-          <div className="grid md:grid-cols-2 gap-5">
-            {[
-              ["name", "Full Name"],
-              ["role", "Target Role"],
-              ["email", "Email"],
-              ["phone", "Phone"],
-              ["portfolio", "Portfolio / GitHub"],
-            ].map(([field, label]) => (
-              <div key={field}>
-                <label className="text-gray-400 text-sm">{label}</label>
-                <input
-                  value={profile[field]}
-                  onChange={(e) => updateProfile(field, e.target.value)}
-                  className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
+        <div className="space-y-8">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold mb-6">Personal Details</h3>
+            <div className="grid md:grid-cols-2 gap-5">
+              {[
+                ["name", "Full Name"],
+                ["role", "Target Role"],
+                ["email", "Email"],
+                ["phone", "Phone"],
+                ["location", "Location"],
+                ["linkedin", "LinkedIn"],
+                ["github", "GitHub"],
+                ["portfolio", "Portfolio"],
+              ].map(([field, label]) => (
+                <div key={field}>
+                  <label className="text-gray-400 text-sm">{label}</label>
+                  <input
+                    value={profile[field]}
+                    onChange={(e) => updateProfile(field, e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold mb-6">Professional Summary</h3>
+            <textarea
+              value={profile.summary}
+              onChange={(e) => updateProfile("summary", e.target.value)}
+              rows="4"
+              className={textareaClass}
+              placeholder="Write a short professional summary..."
+            />
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold mb-6">Skills</h3>
+            <div className="grid md:grid-cols-3 gap-5">
+              <div>
+                <label className="text-gray-400 text-sm">Technical Skills</label>
+                <textarea
+                  value={profile.technicalSkills}
+                  onChange={(e) => updateProfile("technicalSkills", e.target.value)}
+                  rows="5"
+                  className={textareaClass}
                 />
               </div>
-            ))}
 
-            <div className="md:col-span-2">
-              <label className="text-gray-400 text-sm">Skills</label>
-              <textarea
-                value={profile.skills}
-                onChange={(e) => updateProfile("skills", e.target.value)}
-                rows="3"
-                className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
-              />
+              <div>
+                <label className="text-gray-400 text-sm">Soft Skills</label>
+                <textarea
+                  value={profile.softSkills}
+                  onChange={(e) => updateProfile("softSkills", e.target.value)}
+                  rows="5"
+                  className={textareaClass}
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm">Tools / Technologies</label>
+                <textarea
+                  value={profile.tools}
+                  onChange={(e) => updateProfile("tools", e.target.value)}
+                  rows="5"
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold mb-6">Education</h3>
+            <div className="grid md:grid-cols-2 gap-5">
+              {[
+                ["degree", "Degree"],
+                ["college", "College / University"],
+                ["branch", "Branch / Course"],
+                ["graduationYear", "Graduation Year"],
+                ["cgpa", "CGPA / Percentage"],
+              ].map(([field, label]) => (
+                <div key={field}>
+                  <label className="text-gray-400 text-sm">{label}</label>
+                  <input
+                    value={profile[field]}
+                    onChange={(e) => updateProfile(field, e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold mb-6">Projects</h3>
+
+            <div className="mb-8">
+              <h4 className="text-xl font-semibold mb-4">Project 1</h4>
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-gray-400 text-sm">Project Name</label>
+                  <input
+                    value={profile.project1Name}
+                    onChange={(e) => updateProfile("project1Name", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-gray-400 text-sm">Project Link</label>
+                  <input
+                    value={profile.project1Link}
+                    onChange={(e) => updateProfile("project1Link", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-gray-400 text-sm">Tech Stack</label>
+                  <textarea
+                    value={profile.project1Tech}
+                    onChange={(e) => updateProfile("project1Tech", e.target.value)}
+                    rows="4"
+                    className={textareaClass}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-gray-400 text-sm">Project Description</label>
+                  <textarea
+                    value={profile.project1Description}
+                    onChange={(e) =>
+                      updateProfile("project1Description", e.target.value)
+                    }
+                    rows="4"
+                    className={textareaClass}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="md:col-span-2">
-              <label className="text-gray-400 text-sm">Experience</label>
-              <textarea
-                value={profile.experience}
-                onChange={(e) => updateProfile("experience", e.target.value)}
-                rows="4"
-                className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
-              />
-            </div>
+            <div>
+              <h4 className="text-xl font-semibold mb-4">Project 2</h4>
+              <div className="grid md:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-gray-400 text-sm">Project Name</label>
+                  <input
+                    value={profile.project2Name}
+                    onChange={(e) => updateProfile("project2Name", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
 
-            <div className="md:col-span-2">
-              <label className="text-gray-400 text-sm">Projects</label>
-              <textarea
-                value={profile.projects}
-                onChange={(e) => updateProfile("projects", e.target.value)}
-                rows="3"
-                className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none"
-              />
+                <div>
+                  <label className="text-gray-400 text-sm">Project Link</label>
+                  <input
+                    value={profile.project2Link}
+                    onChange={(e) => updateProfile("project2Link", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-gray-400 text-sm">Tech Stack</label>
+                  <textarea
+                    value={profile.project2Tech}
+                    onChange={(e) => updateProfile("project2Tech", e.target.value)}
+                    rows="4"
+                    className={textareaClass}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-gray-400 text-sm">Project Description</label>
+                  <textarea
+                    value={profile.project2Description}
+                    onChange={(e) =>
+                      updateProfile("project2Description", e.target.value)
+                    }
+                    rows="4"
+                    className={textareaClass}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold mb-6">Experience</h3>
+            <div className="grid md:grid-cols-2 gap-5">
+              <div>
+                <label className="text-gray-400 text-sm">Experience Type</label>
+                <select
+                  value={profile.experienceType}
+                  onChange={(e) => updateProfile("experienceType", e.target.value)}
+                  className={inputClass}
+                >
+                  <option>Fresher</option>
+                  <option>Internship</option>
+                  <option>Job</option>
+                  <option>Freelance</option>
+                </select>
+              </div>
+
+              {[
+                ["companyName", "Company Name"],
+                ["experienceRole", "Role"],
+                ["experienceDuration", "Duration"],
+              ].map(([field, label]) => (
+                <div key={field}>
+                  <label className="text-gray-400 text-sm">{label}</label>
+                  <input
+                    value={profile[field]}
+                    onChange={(e) => updateProfile(field, e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              ))}
+
+              <div className="md:col-span-2">
+                <label className="text-gray-400 text-sm">Work / Practical Experience Description</label>
+                <textarea
+                  value={profile.experienceDescription}
+                  onChange={(e) =>
+                    updateProfile("experienceDescription", e.target.value)
+                  }
+                  rows="5"
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold mb-6">Extra Details</h3>
+            <div className="grid md:grid-cols-3 gap-5">
+              <div>
+                <label className="text-gray-400 text-sm">Certifications</label>
+                <textarea
+                  value={profile.certifications}
+                  onChange={(e) => updateProfile("certifications", e.target.value)}
+                  rows="5"
+                  className={textareaClass}
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm">Achievements</label>
+                <textarea
+                  value={profile.achievements}
+                  onChange={(e) => updateProfile("achievements", e.target.value)}
+                  rows="5"
+                  className={textareaClass}
+                />
+              </div>
+
+              <div>
+                <label className="text-gray-400 text-sm">Languages</label>
+                <textarea
+                  value={profile.languages}
+                  onChange={(e) => updateProfile("languages", e.target.value)}
+                  rows="5"
+                  className={textareaClass}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-8">
+            <h3 className="text-2xl font-bold mb-6">Resume Preferences</h3>
+            <div className="grid md:grid-cols-2 gap-5">
+              <div>
+                <label className="text-gray-400 text-sm">Resume Style</label>
+                <select
+                  value={profile.resumeStyle}
+                  onChange={(e) => updateProfile("resumeStyle", e.target.value)}
+                  className={inputClass}
+                >
+                  <option>ATS Friendly</option>
+                  <option>Fresher Resume</option>
+                  <option>Professional Resume</option>
+                  <option>Modern Resume</option>
+                </select>
+              </div>
+
+              {[
+                ["preferredLocation", "Preferred Job Location"],
+                ["expectedSalary", "Expected Salary"],
+                ["noticePeriod", "Notice Period"],
+              ].map(([field, label]) => (
+                <div key={field}>
+                  <label className="text-gray-400 text-sm">{label}</label>
+                  <input
+                    value={profile[field]}
+                    onChange={(e) => updateProfile(field, e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
