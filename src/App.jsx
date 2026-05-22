@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://jobpilot-backend-mcv7.onrender.com"
@@ -6,11 +6,39 @@ const API_URL =
 console.log("JOBPILOT API URL:", API_URL)
 
 const emptyProject = { name: "", description: "", tech: "", link: "" }
-const emptyEducation = { degree: "", college: "", branch: "", year: "", score: "" }
-const emptyExperience = { type: "Fresher", company: "", role: "", duration: "", description: "" }
-const emptyCertification = { name: "", issuer: "", year: "", link: "" }
-const emptyAchievement = { title: "", description: "" }
-const emptyLanguage = { name: "", level: "" }
+
+const emptyEducation = {
+  degree: "",
+  college: "",
+  branch: "",
+  year: "",
+  score: "",
+}
+
+const emptyExperience = {
+  type: "Fresher",
+  company: "",
+  role: "",
+  duration: "",
+  description: "",
+}
+
+const emptyCertification = {
+  name: "",
+  issuer: "",
+  year: "",
+  link: "",
+}
+
+const emptyAchievement = {
+  title: "",
+  description: "",
+}
+
+const emptyLanguage = {
+  name: "",
+  level: "",
+}
 
 const defaultProfile = {
   name: "Mohammad Haseeb",
@@ -204,6 +232,10 @@ function App() {
   const [aiLoading, setAiLoading] = useState(false)
   const [openProfileSection, setOpenProfileSection] = useState("personal")
 
+  const aiChatRef = useRef(null)
+  const aiInputRef = useRef(null)
+  const profileScrollRef = useRef(0)
+
   useEffect(() => {
     localStorage.setItem("jobpilot_profile", JSON.stringify(profile))
   }, [profile])
@@ -219,6 +251,15 @@ function App() {
     localStorage.setItem("jobpilot_ai_messages", JSON.stringify(aiMessages))
   }, [aiMessages])
 
+  useEffect(() => {
+    if (!aiChatRef.current) return
+
+    aiChatRef.current.scrollTo({
+      top: aiChatRef.current.scrollHeight,
+      behavior: "smooth",
+    })
+  }, [aiMessages, aiLoading])
+
   const inputClass =
     "w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-400 transition"
   const textareaClass =
@@ -229,16 +270,34 @@ function App() {
   }
 
   const updateProfile = (field, value) => {
+    profileScrollRef.current = window.scrollY
+
     setProfile((prev) => ({ ...prev, [field]: value }))
+
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: profileScrollRef.current,
+        behavior: "auto",
+      })
+    })
   }
 
   const updateArrayItem = (section, index, field, value) => {
+    profileScrollRef.current = window.scrollY
+
     setProfile((prev) => ({
       ...prev,
       [section]: prev[section].map((item, i) =>
         i === index ? { ...item, [field]: value } : item
       ),
     }))
+
+    requestAnimationFrame(() => {
+      window.scrollTo({
+        top: profileScrollRef.current,
+        behavior: "auto",
+      })
+    })
   }
 
   const addArrayItem = (section, emptyItem) => {
@@ -338,7 +397,8 @@ Description: ${exp.description}`
     certifications: profile.certifications.length > 0,
     achievements: profile.achievements.length > 0,
     languages: profile.languages.some((lang) => isFilled(lang.name)),
-    preferences: isFilled(profile.resumeStyle) && isFilled(profile.preferredLocation),
+    preferences:
+      isFilled(profile.resumeStyle) && isFilled(profile.preferredLocation),
   }
 
   const completedSections = Object.values(sectionStatus).filter(Boolean).length
@@ -518,6 +578,13 @@ ${profile.phone}`,
     setAiInput("")
     setAiLoading(true)
 
+    setTimeout(() => {
+      aiChatRef.current?.scrollTo({
+        top: aiChatRef.current.scrollHeight,
+        behavior: "smooth",
+      })
+    }, 50)
+
     try {
       const res = await fetch(`${API_URL}/agent`, {
         method: "POST",
@@ -548,6 +615,13 @@ ${profile.phone}`,
       }
 
       setAiMessages((prev) => [...prev, { role: "ai", text: data.reply }])
+
+      setTimeout(() => {
+        aiChatRef.current?.scrollTo({
+          top: aiChatRef.current.scrollHeight,
+          behavior: "smooth",
+        })
+      }, 100)
     } catch (error) {
       console.error("AI agent frontend error:", error)
 
@@ -560,6 +634,10 @@ ${profile.phone}`,
       ])
     } finally {
       setAiLoading(false)
+
+      setTimeout(() => {
+        aiInputRef.current?.focus()
+      }, 100)
     }
   }
 
@@ -708,6 +786,13 @@ ${profile.phone}`,
         text: "Chat cleared ✅ Ask me anything about resumes, skills, interviews, jobs, or applications.",
       },
     ])
+
+    setTimeout(() => {
+      aiChatRef.current?.scrollTo({
+        top: aiChatRef.current.scrollHeight,
+        behavior: "smooth",
+      })
+    }, 100)
   }
 
   const AccordionCard = ({ id, title, description, count, children }) => {
@@ -761,19 +846,34 @@ ${profile.phone}`,
           </h1>
 
           <div className="hidden md:flex gap-6 text-gray-300">
-            <button onClick={() => scrollToSection("jobs")} className="hover:text-white">
+            <button
+              onClick={() => scrollToSection("jobs")}
+              className="hover:text-white"
+            >
               Jobs
             </button>
-            <button onClick={() => scrollToSection("ai-agent")} className="hover:text-white">
+            <button
+              onClick={() => scrollToSection("ai-agent")}
+              className="hover:text-white"
+            >
               AI
             </button>
-            <button onClick={() => scrollToSection("workspace")} className="hover:text-white">
+            <button
+              onClick={() => scrollToSection("workspace")}
+              className="hover:text-white"
+            >
               Apply
             </button>
-            <button onClick={() => scrollToSection("tracker")} className="hover:text-white">
+            <button
+              onClick={() => scrollToSection("tracker")}
+              className="hover:text-white"
+            >
               Tracker
             </button>
-            <button onClick={() => scrollToSection("profile")} className="hover:text-white">
+            <button
+              onClick={() => scrollToSection("profile")}
+              className="hover:text-white"
+            >
               Profile
             </button>
           </div>
@@ -793,8 +893,8 @@ ${profile.phone}`,
 
             <p className="text-gray-400 text-xl leading-relaxed mb-8">
               JobPilot helps candidates create resume details, search jobs,
-              generate professional resumes, improve skills, prepare for interviews,
-              and open Gmail-ready job emails.
+              generate professional resumes, improve skills, prepare for
+              interviews, and open Gmail-ready job emails.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -834,7 +934,9 @@ ${profile.phone}`,
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
               <p className="text-gray-400">Projects</p>
-              <h3 className="text-5xl font-bold mt-3">{profile.projects.length}</h3>
+              <h3 className="text-5xl font-bold mt-3">
+                {profile.projects.length}
+              </h3>
             </div>
 
             <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
@@ -849,16 +951,19 @@ ${profile.phone}`,
 
       <section id="ai-agent" className="max-w-7xl mx-auto px-6 py-16">
         <div className="mb-10">
-          <p className="text-purple-400 font-semibold mb-3">JobPilot AI Agent</p>
+          <p className="text-purple-400 font-semibold mb-3">
+            JobPilot AI Agent
+          </p>
           <h2 className="text-5xl font-bold mb-4">Ask AI Anything</h2>
           <p className="text-gray-400 text-lg">
-            Generate resumes, improve skills, prepare for interviews, create job emails,
-            and get personal career guidance using your candidate details.
+            Generate resumes, improve skills, prepare for interviews, create job
+            emails, and get personal career guidance using your candidate
+            details.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-fit">
             <h3 className="text-2xl font-bold mb-5">Quick AI Actions</h3>
 
             <div className="space-y-3">
@@ -927,7 +1032,10 @@ ${profile.phone}`,
           </div>
 
           <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6">
-            <div className="h-[520px] overflow-y-auto space-y-4 pr-2 mb-5">
+            <div
+              ref={aiChatRef}
+              className="h-[520px] overflow-y-auto space-y-4 pr-2 mb-5 scroll-smooth"
+            >
               {aiMessages.map((msg, index) => (
                 <div
                   key={index}
@@ -953,6 +1061,7 @@ ${profile.phone}`,
 
             <div className="grid md:grid-cols-[1fr_auto] gap-3">
               <textarea
+                ref={aiInputRef}
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -963,7 +1072,7 @@ ${profile.phone}`,
                 }}
                 placeholder="Ask JobPilot AI..."
                 rows="3"
-                className="bg-black/30 border border-white/10 rounded-2xl p-4 outline-none resize-none"
+                className="bg-black/30 border border-white/10 rounded-2xl p-4 outline-none resize-none focus:border-purple-400 transition"
               />
 
               <button
@@ -978,12 +1087,16 @@ ${profile.phone}`,
             <div className="flex flex-wrap gap-3 mt-4">
               <button
                 onClick={() => {
-                  const lastAi = [...aiMessages].reverse().find((msg) => msg.role === "ai")
+                  const lastAi = [...aiMessages]
+                    .reverse()
+                    .find((msg) => msg.role === "ai")
                   if (lastAi) copyToClipboard(lastAi.text, "ai")
                 }}
                 className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm"
               >
-                {copied === "ai" ? "Copied AI Response ✅" : "Copy Last AI Response"}
+                {copied === "ai"
+                  ? "Copied AI Response ✅"
+                  : "Copy Last AI Response"}
               </button>
 
               <button
@@ -1113,7 +1226,8 @@ ${profile.phone}`,
           <p className="text-blue-400 font-semibold mb-3">Step 2</p>
           <h2 className="text-5xl font-bold mb-4">Application Workspace</h2>
           <p className="text-gray-400 text-lg">
-            Review the selected job, copy materials, or open Gmail with the email ready.
+            Review the selected job, copy materials, or open Gmail with the
+            email ready.
           </p>
         </div>
 
@@ -1123,10 +1237,12 @@ ${profile.phone}`,
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+            <div className="bg-white/5 border border-white/10 rounded-3xl p-6 h-fit">
               <p className="text-blue-400 font-semibold mb-3">Selected Job</p>
               <h3 className="text-3xl font-bold mb-3">{selectedJob.title}</h3>
-              <p className="text-gray-300 text-xl mb-5">{selectedJob.company}</p>
+              <p className="text-gray-300 text-xl mb-5">
+                {selectedJob.company}
+              </p>
 
               <div className="space-y-3 text-gray-400">
                 <p>📍 {selectedJob.location}</p>
@@ -1155,7 +1271,9 @@ ${profile.phone}`,
                   className={inputClass}
                 />
 
-                <label className="text-gray-400 text-sm mt-4 block">Subject</label>
+                <label className="text-gray-400 text-sm mt-4 block">
+                  Subject
+                </label>
                 <input
                   value={emailDraft.subject}
                   onChange={(e) =>
@@ -1171,10 +1289,13 @@ ${profile.phone}`,
                 <textarea
                   value={emailDraft.body}
                   onChange={(e) =>
-                    setEmailDraft((prev) => ({ ...prev, body: e.target.value }))
+                    setEmailDraft((prev) => ({
+                      ...prev,
+                      body: e.target.value,
+                    }))
                   }
                   rows="12"
-                  className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-4 outline-none leading-relaxed"
+                  className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-4 outline-none leading-relaxed focus:border-blue-400 transition"
                 />
 
                 <div className="grid md:grid-cols-3 gap-4 mt-5">
@@ -1187,7 +1308,10 @@ ${profile.phone}`,
 
                   <button
                     onClick={() => {
-                      setSelectedJob((prev) => ({ ...prev, status: "Applied" }))
+                      setSelectedJob((prev) => ({
+                        ...prev,
+                        status: "Applied",
+                      }))
                       setSavedApplications((prev) =>
                         prev.map((job) =>
                           job.title === selectedJob.title &&
@@ -1314,7 +1438,9 @@ ${profile.phone}`,
 
                 <select
                   value={job.status}
-                  onChange={(e) => updateApplicationStatus(index, e.target.value)}
+                  onChange={(e) =>
+                    updateApplicationStatus(index, e.target.value)
+                  }
                   className={inputClass}
                 >
                   <option>Ready</option>
@@ -1367,7 +1493,8 @@ ${profile.phone}`,
           </p>
           <h2 className="text-5xl font-bold mb-4">Complete Your Profile</h2>
           <p className="text-gray-400 text-lg">
-            Open one section at a time, add multiple projects or experiences, and let AI generate professional results.
+            Open one section at a time, add multiple projects or experiences,
+            and let AI generate professional results.
           </p>
         </div>
 
@@ -1498,7 +1625,9 @@ ${profile.phone}`,
             >
               <div className="grid md:grid-cols-3 gap-5">
                 <div>
-                  <label className="text-gray-400 text-sm">Technical Skills</label>
+                  <label className="text-gray-400 text-sm">
+                    Technical Skills
+                  </label>
                   <textarea
                     value={profile.technicalSkills}
                     onChange={(e) =>
@@ -1513,14 +1642,18 @@ ${profile.phone}`,
                   <label className="text-gray-400 text-sm">Soft Skills</label>
                   <textarea
                     value={profile.softSkills}
-                    onChange={(e) => updateProfile("softSkills", e.target.value)}
+                    onChange={(e) =>
+                      updateProfile("softSkills", e.target.value)
+                    }
                     rows="5"
                     className={textareaClass}
                   />
                 </div>
 
                 <div>
-                  <label className="text-gray-400 text-sm">Tools / Technologies</label>
+                  <label className="text-gray-400 text-sm">
+                    Tools / Technologies
+                  </label>
                   <textarea
                     value={profile.tools}
                     onChange={(e) => updateProfile("tools", e.target.value)}
@@ -1539,9 +1672,14 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.educations.map((edu, index) => (
-                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
+                  <div
+                    key={index}
+                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                  >
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">Education {index + 1}</h4>
+                      <h4 className="text-xl font-semibold">
+                        Education {index + 1}
+                      </h4>
                       {profile.educations.length > 1 && (
                         <button
                           onClick={() => removeArrayItem("educations", index)}
@@ -1561,11 +1699,18 @@ ${profile.phone}`,
                         ["score", "CGPA / Percentage"],
                       ].map(([field, label]) => (
                         <div key={field}>
-                          <label className="text-gray-400 text-sm">{label}</label>
+                          <label className="text-gray-400 text-sm">
+                            {label}
+                          </label>
                           <input
                             value={edu[field]}
                             onChange={(e) =>
-                              updateArrayItem("educations", index, field, e.target.value)
+                              updateArrayItem(
+                                "educations",
+                                index,
+                                field,
+                                e.target.value
+                              )
                             }
                             className={inputClass}
                           />
@@ -1592,9 +1737,14 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.projects.map((project, index) => (
-                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
+                  <div
+                    key={index}
+                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                  >
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">Project {index + 1}</h4>
+                      <h4 className="text-xl font-semibold">
+                        Project {index + 1}
+                      </h4>
                       {profile.projects.length > 1 && (
                         <button
                           onClick={() => removeArrayItem("projects", index)}
@@ -1607,33 +1757,54 @@ ${profile.phone}`,
 
                     <div className="grid md:grid-cols-2 gap-5">
                       <div>
-                        <label className="text-gray-400 text-sm">Project Name</label>
+                        <label className="text-gray-400 text-sm">
+                          Project Name
+                        </label>
                         <input
                           value={project.name}
                           onChange={(e) =>
-                            updateArrayItem("projects", index, "name", e.target.value)
+                            updateArrayItem(
+                              "projects",
+                              index,
+                              "name",
+                              e.target.value
+                            )
                           }
                           className={inputClass}
                         />
                       </div>
 
                       <div>
-                        <label className="text-gray-400 text-sm">Project Link</label>
+                        <label className="text-gray-400 text-sm">
+                          Project Link
+                        </label>
                         <input
                           value={project.link}
                           onChange={(e) =>
-                            updateArrayItem("projects", index, "link", e.target.value)
+                            updateArrayItem(
+                              "projects",
+                              index,
+                              "link",
+                              e.target.value
+                            )
                           }
                           className={inputClass}
                         />
                       </div>
 
                       <div>
-                        <label className="text-gray-400 text-sm">Tech Stack</label>
+                        <label className="text-gray-400 text-sm">
+                          Tech Stack
+                        </label>
                         <textarea
                           value={project.tech}
                           onChange={(e) =>
-                            updateArrayItem("projects", index, "tech", e.target.value)
+                            updateArrayItem(
+                              "projects",
+                              index,
+                              "tech",
+                              e.target.value
+                            )
                           }
                           rows="4"
                           className={textareaClass}
@@ -1641,11 +1812,18 @@ ${profile.phone}`,
                       </div>
 
                       <div>
-                        <label className="text-gray-400 text-sm">Project Description</label>
+                        <label className="text-gray-400 text-sm">
+                          Project Description
+                        </label>
                         <textarea
                           value={project.description}
                           onChange={(e) =>
-                            updateArrayItem("projects", index, "description", e.target.value)
+                            updateArrayItem(
+                              "projects",
+                              index,
+                              "description",
+                              e.target.value
+                            )
                           }
                           rows="4"
                           className={textareaClass}
@@ -1672,9 +1850,14 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.experiences.map((exp, index) => (
-                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
+                  <div
+                    key={index}
+                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                  >
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">Experience {index + 1}</h4>
+                      <h4 className="text-xl font-semibold">
+                        Experience {index + 1}
+                      </h4>
                       {profile.experiences.length > 1 && (
                         <button
                           onClick={() => removeArrayItem("experiences", index)}
@@ -1687,11 +1870,18 @@ ${profile.phone}`,
 
                     <div className="grid md:grid-cols-2 gap-5">
                       <div>
-                        <label className="text-gray-400 text-sm">Experience Type</label>
+                        <label className="text-gray-400 text-sm">
+                          Experience Type
+                        </label>
                         <select
                           value={exp.type}
                           onChange={(e) =>
-                            updateArrayItem("experiences", index, "type", e.target.value)
+                            updateArrayItem(
+                              "experiences",
+                              index,
+                              "type",
+                              e.target.value
+                            )
                           }
                           className={inputClass}
                         >
@@ -1708,11 +1898,18 @@ ${profile.phone}`,
                         ["duration", "Duration"],
                       ].map(([field, label]) => (
                         <div key={field}>
-                          <label className="text-gray-400 text-sm">{label}</label>
+                          <label className="text-gray-400 text-sm">
+                            {label}
+                          </label>
                           <input
                             value={exp[field]}
                             onChange={(e) =>
-                              updateArrayItem("experiences", index, field, e.target.value)
+                              updateArrayItem(
+                                "experiences",
+                                index,
+                                field,
+                                e.target.value
+                              )
                             }
                             className={inputClass}
                           />
@@ -1720,11 +1917,18 @@ ${profile.phone}`,
                       ))}
 
                       <div className="md:col-span-2">
-                        <label className="text-gray-400 text-sm">Description</label>
+                        <label className="text-gray-400 text-sm">
+                          Description
+                        </label>
                         <textarea
                           value={exp.description}
                           onChange={(e) =>
-                            updateArrayItem("experiences", index, "description", e.target.value)
+                            updateArrayItem(
+                              "experiences",
+                              index,
+                              "description",
+                              e.target.value
+                            )
                           }
                           rows="5"
                           className={textareaClass}
@@ -1751,11 +1955,18 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.certifications.map((cert, index) => (
-                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
+                  <div
+                    key={index}
+                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                  >
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">Certification {index + 1}</h4>
+                      <h4 className="text-xl font-semibold">
+                        Certification {index + 1}
+                      </h4>
                       <button
-                        onClick={() => removeArrayItem("certifications", index)}
+                        onClick={() =>
+                          removeArrayItem("certifications", index)
+                        }
                         className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
                       >
                         Remove
@@ -1770,11 +1981,18 @@ ${profile.phone}`,
                         ["link", "Certificate Link"],
                       ].map(([field, label]) => (
                         <div key={field}>
-                          <label className="text-gray-400 text-sm">{label}</label>
+                          <label className="text-gray-400 text-sm">
+                            {label}
+                          </label>
                           <input
                             value={cert[field]}
                             onChange={(e) =>
-                              updateArrayItem("certifications", index, field, e.target.value)
+                              updateArrayItem(
+                                "certifications",
+                                index,
+                                field,
+                                e.target.value
+                              )
                             }
                             className={inputClass}
                           />
@@ -1785,7 +2003,9 @@ ${profile.phone}`,
                 ))}
 
                 <button
-                  onClick={() => addArrayItem("certifications", emptyCertification)}
+                  onClick={() =>
+                    addArrayItem("certifications", emptyCertification)
+                  }
                   className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
                 >
                   + Add Certification
@@ -1801,9 +2021,14 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.achievements.map((achievement, index) => (
-                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
+                  <div
+                    key={index}
+                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                  >
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">Achievement {index + 1}</h4>
+                      <h4 className="text-xl font-semibold">
+                        Achievement {index + 1}
+                      </h4>
                       <button
                         onClick={() => removeArrayItem("achievements", index)}
                         className="bg-red-500/20 hover:bg-red-500/30 px-3 py-2 rounded-xl text-red-200"
@@ -1818,18 +2043,30 @@ ${profile.phone}`,
                         <input
                           value={achievement.title}
                           onChange={(e) =>
-                            updateArrayItem("achievements", index, "title", e.target.value)
+                            updateArrayItem(
+                              "achievements",
+                              index,
+                              "title",
+                              e.target.value
+                            )
                           }
                           className={inputClass}
                         />
                       </div>
 
                       <div>
-                        <label className="text-gray-400 text-sm">Description</label>
+                        <label className="text-gray-400 text-sm">
+                          Description
+                        </label>
                         <textarea
                           value={achievement.description}
                           onChange={(e) =>
-                            updateArrayItem("achievements", index, "description", e.target.value)
+                            updateArrayItem(
+                              "achievements",
+                              index,
+                              "description",
+                              e.target.value
+                            )
                           }
                           rows="4"
                           className={textareaClass}
@@ -1840,7 +2077,9 @@ ${profile.phone}`,
                 ))}
 
                 <button
-                  onClick={() => addArrayItem("achievements", emptyAchievement)}
+                  onClick={() =>
+                    addArrayItem("achievements", emptyAchievement)
+                  }
                   className="bg-blue-600 hover:bg-blue-700 px-5 py-3 rounded-xl font-semibold"
                 >
                   + Add Achievement
@@ -1856,9 +2095,14 @@ ${profile.phone}`,
             >
               <div className="space-y-5">
                 {profile.languages.map((language, index) => (
-                  <div key={index} className="bg-black/20 border border-white/10 rounded-2xl p-5">
+                  <div
+                    key={index}
+                    className="bg-black/20 border border-white/10 rounded-2xl p-5"
+                  >
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="text-xl font-semibold">Language {index + 1}</h4>
+                      <h4 className="text-xl font-semibold">
+                        Language {index + 1}
+                      </h4>
                       {profile.languages.length > 1 && (
                         <button
                           onClick={() => removeArrayItem("languages", index)}
@@ -1871,11 +2115,18 @@ ${profile.phone}`,
 
                     <div className="grid md:grid-cols-2 gap-5">
                       <div>
-                        <label className="text-gray-400 text-sm">Language</label>
+                        <label className="text-gray-400 text-sm">
+                          Language
+                        </label>
                         <input
                           value={language.name}
                           onChange={(e) =>
-                            updateArrayItem("languages", index, "name", e.target.value)
+                            updateArrayItem(
+                              "languages",
+                              index,
+                              "name",
+                              e.target.value
+                            )
                           }
                           className={inputClass}
                         />
@@ -1886,7 +2137,12 @@ ${profile.phone}`,
                         <input
                           value={language.level}
                           onChange={(e) =>
-                            updateArrayItem("languages", index, "level", e.target.value)
+                            updateArrayItem(
+                              "languages",
+                              index,
+                              "level",
+                              e.target.value
+                            )
                           }
                           placeholder="Native / Good / Fluent"
                           className={inputClass}
@@ -1915,7 +2171,9 @@ ${profile.phone}`,
                   <label className="text-gray-400 text-sm">Resume Style</label>
                   <select
                     value={profile.resumeStyle}
-                    onChange={(e) => updateProfile("resumeStyle", e.target.value)}
+                    onChange={(e) =>
+                      updateProfile("resumeStyle", e.target.value)
+                    }
                     className={inputClass}
                   >
                     <option>ATS Friendly</option>
