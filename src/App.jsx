@@ -11,7 +11,7 @@ function App() {
     portfolio: "github.com/yourusername",
     skills: "React, JavaScript, Tailwind CSS, Python, APIs",
     experience:
-      "Built JobPilot, an AI career assistant web app with React, Tailwind CSS, Node.js backend, real job search, application tracker, and email sending system.",
+      "Built JobPilot, an AI career assistant web app with React, Tailwind CSS, Node.js backend, real job search, application tracker, and email preparation system.",
     projects: "JobPilot AI Career Assistant, Portfolio Website, Resume Builder App",
   }
 
@@ -35,7 +35,6 @@ function App() {
   const [emailDraft, setEmailDraft] = useState(null)
 
   const [recipientEmail, setRecipientEmail] = useState("")
-  const [sendingEmail, setSendingEmail] = useState(false)
   const [emailStatus, setEmailStatus] = useState("")
 
   const [savedApplications, setSavedApplications] = useState(() => {
@@ -176,9 +175,11 @@ ${profile.name}`
 4. Copy/edit the recruiter message.
 5. Generate email draft.
 6. Enter recipient email.
-7. Open in Gmail and send manually.
-8. Mark job as Applied.
-9. Follow up after 3 to 5 days.`
+7. Open in Gmail.
+8. Review the email inside Gmail.
+9. Click Send manually from your Gmail.
+10. Mark job as Applied.
+11. Follow up after 3 to 5 days.`
 
     return {
       coverLetter,
@@ -282,87 +283,6 @@ ${profile.portfolio}`,
 
     window.open(gmailUrl, "_blank")
     setEmailStatus("Gmail opened ✅ Review and click Send in Gmail.")
-  }
-
-  const sendEmail = async () => {
-    if (!selectedJob || !emailDraft) {
-      setEmailStatus("Please select a job first.")
-      return
-    }
-
-    if (!recipientEmail.trim()) {
-      setEmailStatus("Please enter recipient email.")
-      return
-    }
-
-    if (!emailDraft.subject || !emailDraft.body) {
-      setEmailStatus("Please check subject and body before sending.")
-      return
-    }
-
-    const confirmSend = window.confirm(
-      `Send email to ${recipientEmail}?\n\nThis uses JobPilot/Resend sender. For professional Gmail sender, use Open in Gmail.`
-    )
-
-    if (!confirmSend) return
-
-    setSendingEmail(true)
-    setEmailStatus("Sending email...")
-
-    try {
-      console.log("API_URL:", API_URL)
-      console.log("Sending email to:", recipientEmail)
-
-      const res = await fetch(`${API_URL}/send-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: recipientEmail.trim(),
-          subject: emailDraft.subject,
-          body: emailDraft.body,
-        }),
-      })
-
-      let data = {}
-
-      try {
-        data = await res.json()
-      } catch (jsonError) {
-        console.error("Could not read JSON response:", jsonError)
-        throw new Error("Backend did not return JSON response")
-      }
-
-      console.log("Email response:", data)
-
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Email failed. Check Render logs.")
-      }
-
-      setEmailStatus("Email sent successfully ✅")
-
-      setSelectedJob((prev) => ({ ...prev, status: "Applied" }))
-
-      setSavedApplications((prev) =>
-        prev.map((job) =>
-          job.title === selectedJob.title &&
-          job.company === selectedJob.company &&
-          job.location === selectedJob.location
-            ? {
-                ...job,
-                status: "Applied",
-                note: `Email sent to ${recipientEmail}`,
-              }
-            : job
-        )
-      )
-    } catch (error) {
-      console.error("Frontend email error:", error)
-      setEmailStatus(`Email failed ❌ ${error.message}`)
-    } finally {
-      setSendingEmail(false)
-    }
   }
 
   const copyToClipboard = async (text, key) => {
@@ -491,16 +411,16 @@ ${profile.portfolio}`,
         <div className="grid lg:grid-cols-2 gap-10 items-center">
           <div>
             <p className="text-blue-400 font-semibold mb-4">
-              AI Job Applying Agent
+              AI Job Applying Assistant
             </p>
 
             <h2 className="text-6xl font-bold leading-tight mb-6">
-              Find jobs. Prepare application. Send email.
+              Find jobs. Prepare applications. Open Gmail.
             </h2>
 
             <p className="text-gray-400 text-xl leading-relaxed mb-8">
               A simple AI-powered workflow for real job search, application preparation,
-              Gmail sending, and application tracking.
+              Gmail-ready email drafting, and application tracking.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -741,20 +661,12 @@ ${profile.portfolio}`,
                   className="w-full mt-2 bg-black/30 border border-white/10 rounded-xl p-4 outline-none leading-relaxed"
                 />
 
-                <div className="grid md:grid-cols-4 gap-4 mt-5">
+                <div className="grid md:grid-cols-3 gap-4 mt-5">
                   <button
                     onClick={openInGmail}
                     className="bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-semibold"
                   >
                     Open in Gmail
-                  </button>
-
-                  <button
-                    onClick={sendEmail}
-                    disabled={sendingEmail}
-                    className="bg-pink-600 hover:bg-pink-700 py-4 rounded-xl font-semibold disabled:opacity-50"
-                  >
-                    {sendingEmail ? "Sending..." : "Send Email"}
                   </button>
 
                   <button
