@@ -1,91 +1,21 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://jobpilot-backend-mcv7.onrender.com"
 
-const jobRoleOptions = [
-  "Frontend Developer",
-  "Backend Developer",
-  "Full Stack Developer",
-  "React Developer",
-  "JavaScript Developer",
-  "TypeScript Developer",
-  "Python Developer",
-  "Django Developer",
-  "Flask Developer",
-  "Java Developer",
-  "Spring Boot Developer",
-  "Node.js Developer",
-  "Express.js Developer",
-  "PHP Developer",
-  "Laravel Developer",
-  "MERN Stack Developer",
-  "MEAN Stack Developer",
-  "Software Developer",
-  "Software Engineer",
-  "Web Developer",
-  "WordPress Developer",
-  "Shopify Developer",
-  "Mobile App Developer",
-  "Android Developer",
-  "iOS Developer",
-  "Flutter Developer",
-  "React Native Developer",
-  "UI Developer",
-  "UI/UX Designer",
-  "UX Designer",
-  "Graphic Designer",
-  "Product Designer",
-  "Data Analyst",
-  "Data Scientist",
-  "Business Analyst",
-  "Machine Learning Engineer",
-  "AI Engineer",
-  "Prompt Engineer",
-  "Cloud Engineer",
-  "AWS Cloud Engineer",
-  "Azure Cloud Engineer",
-  "DevOps Engineer",
-  "Cybersecurity Analyst",
-  "Network Engineer",
-  "System Administrator",
-  "Database Administrator",
-  "SQL Developer",
-  "QA Tester",
-  "Automation Tester",
-  "Manual Tester",
-  "Technical Support Engineer",
-  "IT Support Engineer",
-  "Digital Marketing Executive",
-  "SEO Specialist",
-  "Content Writer",
-  "Social Media Manager",
-  "HR Executive",
-  "Recruiter",
-  "Sales Executive",
-  "Business Development Executive",
-  "Customer Support Executive",
-  "Accountant",
-  "Finance Analyst",
-  "Project Manager",
-  "Product Manager",
-  "Operations Executive",
-  "Other",
-]
-
 const countryOptions = [
-  { code: "in", name: "India", currency: "INR", label: "â‚¹ / LPA" },
+  { code: "in", name: "India", currency: "INR", label: "₹ / LPA" },
   { code: "us", name: "United States", currency: "USD", label: "$ / year" },
-  { code: "gb", name: "United Kingdom", currency: "GBP", label: "Â£ / year" },
+  { code: "gb", name: "United Kingdom", currency: "GBP", label: "£ / year" },
   { code: "ca", name: "Canada", currency: "CAD", label: "C$ / year" },
   { code: "au", name: "Australia", currency: "AUD", label: "A$ / year" },
-  { code: "de", name: "Germany", currency: "EUR", label: "â‚¬ / year" },
-  { code: "fr", name: "France", currency: "EUR", label: "â‚¬ / year" },
+  { code: "de", name: "Germany", currency: "EUR", label: "€ / year" },
+  { code: "fr", name: "France", currency: "EUR", label: "€ / year" },
   { code: "nz", name: "New Zealand", currency: "NZD", label: "NZ$ / year" },
   { code: "za", name: "South Africa", currency: "ZAR", label: "R / year" },
   { code: "br", name: "Brazil", currency: "BRL", label: "R$ / year" },
-  { code: "pl", name: "Poland", currency: "PLN", label: "zÅ‚ / year" },
-  { code: "at", name: "Austria", currency: "EUR", label: "â‚¬ / year" },
+  { code: "pl", name: "Poland", currency: "PLN", label: "zł / year" },
+  { code: "at", name: "Austria", currency: "EUR", label: "€ / year" },
 ]
 
 const salaryRanges = {
@@ -764,7 +694,7 @@ function AccordionCard({
       >
         <div>
           <div className="flex items-center gap-3">
-            <span className="text-xl">{isOpen ? "â–¾" : "â–¸"}</span>
+            <span className="text-xl">{isOpen ? "▾" : "▸"}</span>
             <h3 className="text-xl font-bold">{title}</h3>
             <span
               className={`text-xs px-3 py-1 rounded-full ${
@@ -900,7 +830,7 @@ function TemplateSelector({ selectedResumeTemplate, setSelectedResumeTemplate })
             <div className="flex items-center justify-between gap-2 mb-2">
               <p className="font-bold">{template.name}</p>
               {selectedResumeTemplate === template.id && (
-                <span className="text-green-300 text-sm">âœ“</span>
+                <span className="text-green-300 text-sm">✓</span>
               )}
             </div>
 
@@ -958,85 +888,6 @@ function TemplateSelector({ selectedResumeTemplate, setSelectedResumeTemplate })
           </button>
         ))}
       </div>
-    </div>
-  )
-}
-
-function JobRoleSelector({ value, onChange, inputClass }) {
-  const [roleSearch, setRoleSearch] = useState(value || "")
-  const [showOtherInput, setShowOtherInput] = useState(false)
-
-  const filteredRoles = jobRoleOptions.filter((role) =>
-    role.toLowerCase().includes(roleSearch.toLowerCase())
-  )
-
-  const handleRoleSelect = (role) => {
-    if (role === "Other") {
-      setShowOtherInput(true)
-      setRoleSearch("")
-      onChange("")
-      return
-    }
-
-    setShowOtherInput(false)
-    setRoleSearch(role)
-    onChange(role)
-  }
-
-  return (
-    <div className="space-y-3 mt-2">
-      <input
-        value={roleSearch}
-        onChange={(e) => {
-          setRoleSearch(e.target.value)
-          setShowOtherInput(false)
-        }}
-        placeholder="Search role like React, Python, Data..."
-        className={inputClass}
-      />
-
-      <div className="max-h-44 overflow-y-auto bg-black/30 border border-white/10 rounded-xl p-2 space-y-2">
-        {filteredRoles.length === 0 ? (
-          <button
-            type="button"
-            onClick={() => handleRoleSelect("Other")}
-            className="w-full text-left px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700"
-          >
-            Other — type your own role
-          </button>
-        ) : (
-          filteredRoles.map((role) => (
-            <button
-              type="button"
-              key={role}
-              onClick={() => handleRoleSelect(role)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition ${
-                value === role
-                  ? "bg-blue-600 text-white"
-                  : "bg-white/5 hover:bg-white/10 text-gray-200"
-              }`}
-            >
-              {role}
-            </button>
-          ))
-        )}
-      </div>
-
-      {showOtherInput && (
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Type your custom job role"
-          className={inputClass}
-          autoFocus
-        />
-      )}
-
-      {value && (
-        <p className="text-xs text-green-300">
-          Selected role: <span className="font-semibold">{value}</span>
-        </p>
-      )}
     </div>
   )
 }
@@ -1100,7 +951,7 @@ function MiniCopyCard({ title, text, copied, copyKey, onCopy }) {
           onClick={() => onCopy(text, copyKey)}
           className="bg-white/10 px-3 py-1 rounded-lg text-sm"
         >
-          {copied === copyKey ? "Copied âœ…" : "Copy"}
+          {copied === copyKey ? "Copied ✅" : "Copy"}
         </button>
       </div>
       <p className="text-gray-300 text-sm whitespace-pre-line max-h-72 overflow-y-auto">
@@ -1144,7 +995,7 @@ function App() {
     const savedMessages = safeParse(localStorage.getItem("jobpilot_ai_messages"), [
       {
         role: "ai",
-        text: "Hi ðŸ‘‹ I am JobPilot AI. Fill your candidate details, then ask me to generate a professional resume, improve your skills, prepare for interviews, or write a job application email.",
+        text: "Hi 👋 I am JobPilot AI. Fill your candidate details, then ask me to generate a professional resume, improve your skills, prepare for interviews, or write a job application email.",
         docType: "response",
       },
     ])
@@ -1775,7 +1626,7 @@ ${profile.phone}`,
       body: lastAi.text,
     })
 
-    setEmailStatus("AI response copied into email draft âœ…")
+    setEmailStatus("AI response copied into email draft ✅")
     scrollToSection("workspace")
   }
 
@@ -1797,7 +1648,7 @@ ${profile.phone}`,
     )}`
 
     window.open(gmailUrl, "_blank")
-    setEmailStatus("Gmail opened âœ… Review and click Send in Gmail.")
+    setEmailStatus("Gmail opened ✅ Review and click Send in Gmail.")
 
     setSavedApplications((prev) =>
       prev.map((job) =>
@@ -1892,7 +1743,7 @@ ${profile.phone}`,
     setAiMessages([
       {
         role: "ai",
-        text: "Chat cleared âœ… Ask me anything about resumes, skills, interviews, jobs, or applications.",
+        text: "Chat cleared ✅ Ask me anything about resumes, skills, interviews, jobs, or applications.",
         docType: "response",
       },
     ])
@@ -1920,7 +1771,7 @@ ${profile.phone}`,
             onClick={() => scrollToSection("home")}
             className="text-3xl font-bold text-blue-400 cursor-pointer"
           >
-            JobPilot ðŸš€
+            JobPilot 🚀
           </h1>
 
           <div className="hidden md:flex gap-6 text-gray-300">
@@ -2087,7 +1938,7 @@ ${profile.phone}`,
                     Latest document is ready
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Type: {latestAi.docType || "response"} â€” Copy it, export as PDF, or download as DOC.
+                    Type: {latestAi.docType || "response"} — Copy it, export as PDF, or download as DOC.
                   </p>
                 </div>
 
@@ -2097,7 +1948,7 @@ ${profile.phone}`,
                     onClick={() => copyToClipboard(latestAi.text, "latest-doc")}
                     className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold"
                   >
-                    {copied === "latest-doc" ? "Copied âœ…" : "Copy"}
+                    {copied === "latest-doc" ? "Copied ✅" : "Copy"}
                   </button>
 
                   <button
@@ -2160,7 +2011,7 @@ ${profile.phone}`,
                         onClick={() => copyToClipboard(msg.text, `chat-${index}`)}
                         className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold"
                       >
-                        {copied === `chat-${index}` ? "Copied âœ…" : "Copy"}
+                        {copied === `chat-${index}` ? "Copied ✅" : "Copy"}
                       </button>
 
                       {msg.role === "ai" && (
@@ -2243,7 +2094,7 @@ ${profile.phone}`,
                 }}
                 className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm"
               >
-                {copied === "ai" ? "Copied AI Response âœ…" : "Copy Last AI Response"}
+                {copied === "ai" ? "Copied AI Response ✅" : "Copy Last AI Response"}
               </button>
 
               <button
@@ -2266,16 +2117,13 @@ ${profile.phone}`,
         />
 
         <div className="grid lg:grid-cols-6 gap-4 mb-6">
-          <SearchBox label="Select Job Role">
-            <JobRoleSelector
+          <SearchBox label="Role">
+            <input
               value={search.role}
-              onChange={(role) =>
-                setSearch((prev) => ({
-                  ...prev,
-                  role,
-                }))
+              onChange={(e) =>
+                setSearch((prev) => ({ ...prev, role: e.target.value }))
               }
-              inputClass={inputClass}
+              className={inputClass}
             />
           </SearchBox>
 
@@ -2377,9 +2225,9 @@ ${profile.phone}`,
               </div>
 
               <div className="space-y-2 text-gray-400 text-sm mb-4">
-                <p>ðŸ“ {job.location}</p>
+                <p>📍 {job.location}</p>
                 <p>
-                  ðŸ’°{" "}
+                  💰{" "}
                   {job.salaryAvailable ? (
                     <span className="text-green-300">{job.salary}</span>
                   ) : (
@@ -2387,12 +2235,12 @@ ${profile.phone}`,
                   )}
                 </p>
                 <p>
-                  ðŸŽšï¸ Filter: {search.salaryRange}
+                  🎚️ Filter: {search.salaryRange}
                   {getSelectedSalaryRange().required && (
-                    <span className="text-green-300"> â€¢ salary verified</span>
+                    <span className="text-green-300"> • salary verified</span>
                   )}
                 </p>
-                <p>ðŸ·ï¸ {job.category}</p>
+                <p>🏷️ {job.category}</p>
               </div>
 
               <p className="text-gray-300 text-sm leading-relaxed h-24 overflow-hidden mb-4">
@@ -2440,11 +2288,11 @@ ${profile.phone}`,
               <p className="text-gray-300 text-lg mb-4">{selectedJob.company}</p>
 
               <div className="space-y-2 text-gray-400">
-                <p>ðŸ“ {selectedJob.location}</p>
-                <p>ðŸ’° {selectedJob.salary}</p>
-                <p>ðŸŽšï¸ Salary Preference: {search.salaryRange}</p>
-                <p>ðŸŽ¯ {selectedJob.match} Match</p>
-                <p>ðŸ“Œ Status: {selectedJob.status}</p>
+                <p>📍 {selectedJob.location}</p>
+                <p>💰 {selectedJob.salary}</p>
+                <p>🎚️ Salary Preference: {search.salaryRange}</p>
+                <p>🎯 {selectedJob.match} Match</p>
+                <p>📌 Status: {selectedJob.status}</p>
               </div>
 
               <button
@@ -2607,10 +2455,10 @@ ${profile.phone}`,
                 <p className="text-gray-400 mt-1">{job.company}</p>
 
                 <div className="space-y-2 text-gray-400 mt-4">
-                  <p>ðŸ“ {job.location}</p>
-                  <p>ðŸŽ¯ {job.match} Match</p>
-                  <p>ðŸ“… {job.date}</p>
-                  {job.note && <p>ðŸ“ {job.note}</p>}
+                  <p>📍 {job.location}</p>
+                  <p>🎯 {job.match} Match</p>
+                  <p>📅 {job.date}</p>
+                  {job.note && <p>📝 {job.note}</p>}
                 </div>
 
                 <select
@@ -2748,7 +2596,7 @@ ${profile.phone}`,
                   }`}
                 >
                   <span>{label}</span>
-                  <span>{sectionStatus[id] ? "âœ…" : "â—‹"}</span>
+                  <span>{sectionStatus[id] ? "✅" : "○"}</span>
                 </button>
               ))}
             </div>
