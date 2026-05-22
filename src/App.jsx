@@ -44,6 +44,21 @@ function App() {
 
   const [copied, setCopied] = useState("")
 
+  const [aiMessages, setAiMessages] = useState(() => {
+    const saved = localStorage.getItem("jobpilot_ai_messages")
+    return saved
+      ? JSON.parse(saved)
+      : [
+          {
+            role: "ai",
+            text: "Hi 👋 I am JobPilot AI. I can generate resumes, improve your skills, prepare you for interviews, and create job application emails using your profile details.",
+          },
+        ]
+  })
+
+  const [aiInput, setAiInput] = useState("")
+  const [aiLoading, setAiLoading] = useState(false)
+
   useEffect(() => {
     localStorage.setItem("jobpilot_profile", JSON.stringify(profile))
   }, [profile])
@@ -54,6 +69,10 @@ function App() {
       JSON.stringify(savedApplications)
     )
   }, [savedApplications])
+
+  useEffect(() => {
+    localStorage.setItem("jobpilot_ai_messages", JSON.stringify(aiMessages))
+  }, [aiMessages])
 
   const scrollToSection = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" })
@@ -187,7 +206,7 @@ ${profile.name}`
     }
   }
 
-  const buildEmailDraft = (job, pack) => {
+  const buildEmailDraft = (job) => {
     const projectLine = profile.projects
       ? `One of my key projects is ${profile.projects.split(",")[0].trim()}, where I gained practical experience in frontend development, backend integration, and real-world user workflows.`
       : "I have worked on practical projects that helped me improve my frontend development and problem-solving skills."
@@ -231,7 +250,7 @@ ${profile.phone}`,
     }
 
     const pack = buildApplicationPack(cleanJob)
-    const draft = buildEmailDraft(cleanJob, pack)
+    const draft = buildEmailDraft(cleanJob)
 
     setSelectedJob(cleanJob)
     setApplicationPack(pack)
@@ -253,6 +272,78 @@ ${profile.phone}`,
     })
 
     setTimeout(() => scrollToSection("workspace"), 200)
+  }
+
+  const askAgent = async (messageText) => {
+    const cleanMessage = messageText.trim()
+
+    if (!cleanMessage) return
+
+    setAiMessages((prev) => [...prev, { role: "user", text: cleanMessage }])
+    setAiInput("")
+    setAiLoading(true)
+
+    try {
+      const res = await fetch(`${API_URL}/agent`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: cleanMessage,
+          profile,
+          selectedJob,
+          savedApplications,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.reply || data.error || "AI agent failed")
+      }
+
+      setAiMessages((prev) => [...prev, { role: "ai", text: data.reply }])
+    } catch (error) {
+      console.error("AI agent frontend error:", error)
+
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          role: "ai",
+          text: `Sorry, AI failed: ${error.message}. Please check Render backend logs.`,
+        },
+      ])
+    } finally {
+      setAiLoading(false)
+    }
+  }
+
+  const quickAskAgent = (prompt) => {
+    askAgent(prompt)
+    setTimeout(() => scrollToSection("ai-agent"), 100)
+  }
+
+  const useLastAiAsEmail = () => {
+    const lastAi = [...aiMessages].reverse().find((msg) => msg.role === "ai")
+
+    if (!lastAi) {
+      setEmailStatus("No AI response found yet.")
+      return
+    }
+
+    if (!selectedJob) {
+      setEmailStatus("Please select a job first.")
+      return
+    }
+
+    setEmailDraft({
+      subject: `Application for ${selectedJob.title} - ${profile.name}`,
+      body: lastAi.text,
+    })
+
+    setEmailStatus("AI response copied into email draft ✅")
+    scrollToSection("workspace")
   }
 
   const openInGmail = () => {
@@ -381,6 +472,15 @@ ${profile.phone}`,
     localStorage.removeItem("jobpilot_saved_applications")
   }
 
+  const clearAiChat = () => {
+    setAiMessages([
+      {
+        role: "ai",
+        text: "Chat cleared ✅ Ask me anything about resumes, skills, interviews, jobs, or applications.",
+      },
+    ])
+  }
+
   const resumeScore = Math.round(
     [
       profile.name,
@@ -409,6 +509,9 @@ ${profile.phone}`,
             <button onClick={() => scrollToSection("jobs")} className="hover:text-white">
               Jobs
             </button>
+            <button onClick={() => scrollToSection("ai-agent")} className="hover:text-white">
+              AI
+            </button>
             <button onClick={() => scrollToSection("workspace")} className="hover:text-white">
               Apply
             </button>
@@ -430,12 +533,13 @@ ${profile.phone}`,
             </p>
 
             <h2 className="text-6xl font-bold leading-tight mb-6">
-              Find jobs. Prepare applications. Open Gmail.
+              Find jobs. Ask AI. Prepare applications.
             </h2>
 
             <p className="text-gray-400 text-xl leading-relaxed mb-8">
-              A simple AI-powered workflow for real job search, application preparation,
-              Gmail-ready email drafting, and application tracking.
+              JobPilot helps you search jobs, generate professional resumes,
+              improve skills, prepare for interviews, and open Gmail-ready job
+              application emails.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -444,6 +548,13 @@ ${profile.phone}`,
                 className="bg-blue-600 hover:bg-blue-700 px-7 py-4 rounded-2xl font-semibold"
               >
                 Find Real Jobs
+              </button>
+
+              <button
+                onClick={() => scrollToSection("ai-agent")}
+                className="bg-purple-600 hover:bg-purple-700 px-7 py-4 rounded-2xl font-semibold"
+              >
+                Ask JobPilot AI
               </button>
 
               <button
@@ -478,6 +589,144 @@ ${profile.phone}`,
               <h3 className="text-5xl font-bold mt-3">
                 {rankedJobs[0]?.matchScore ? `${rankedJobs[0].matchScore}%` : "—"}
               </h3>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="ai-agent" className="max-w-7xl mx-auto px-6 py-16">
+        <div className="mb-10">
+          <p className="text-purple-400 font-semibold mb-3">JobPilot AI Agent</p>
+          <h2 className="text-5xl font-bold mb-4">Ask AI Anything</h2>
+          <p className="text-gray-400 text-lg">
+            Generate resumes, improve skills, prepare for interviews, create job emails,
+            and get personal career guidance using your profile details.
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6">
+            <h3 className="text-2xl font-bold mb-5">Quick AI Actions</h3>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => quickAskAgent("Generate my professional ATS-friendly resume using my profile details. Make it clean, strong, and suitable for my target role.")}
+                className="w-full bg-purple-600 hover:bg-purple-700 py-3 px-4 rounded-xl text-left font-semibold"
+              >
+                Generate Resume
+              </button>
+
+              <button
+                onClick={() => quickAskAgent("Create a personalized 30-day skill improvement roadmap for my target role based on my current skills and projects.")}
+                className="w-full bg-blue-600 hover:bg-blue-700 py-3 px-4 rounded-xl text-left font-semibold"
+              >
+                Improve My Skills
+              </button>
+
+              <button
+                onClick={() => quickAskAgent("Prepare me for interviews for my target role. Give common questions, strong sample answers, and practice advice.")}
+                className="w-full bg-green-600 hover:bg-green-700 py-3 px-4 rounded-xl text-left font-semibold"
+              >
+                Interview Prep
+              </button>
+
+              <button
+                onClick={() => quickAskAgent("Generate a short professional application email for the selected job using my profile. Make it human, clear, and not repetitive.")}
+                className="w-full bg-pink-600 hover:bg-pink-700 py-3 px-4 rounded-xl text-left font-semibold"
+              >
+                Generate Email for Job
+              </button>
+
+              <button
+                onClick={() => quickAskAgent("Suggest 5 impressive projects I can build to improve my chances for my target role.")}
+                className="w-full bg-white/10 hover:bg-white/20 py-3 px-4 rounded-xl text-left font-semibold"
+              >
+                Project Ideas
+              </button>
+
+              <button
+                onClick={clearAiChat}
+                className="w-full bg-red-500/20 hover:bg-red-500/30 py-3 px-4 rounded-xl text-left font-semibold text-red-200"
+              >
+                Clear AI Chat
+              </button>
+            </div>
+
+            <div className="mt-6 bg-black/30 border border-white/10 rounded-2xl p-4 text-sm text-gray-300">
+              <p className="font-semibold text-white mb-2">AI uses:</p>
+              <p>✅ Your profile</p>
+              <p>✅ Selected job</p>
+              <p>✅ Saved applications</p>
+              <p>✅ Your target role</p>
+            </div>
+          </div>
+
+          <div className="lg:col-span-2 bg-white/5 border border-white/10 rounded-3xl p-6">
+            <div className="h-[520px] overflow-y-auto space-y-4 pr-2 mb-5">
+              {aiMessages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`rounded-2xl p-4 whitespace-pre-line leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-blue-600/20 border border-blue-400/20 ml-10"
+                      : "bg-black/30 border border-white/10 mr-10"
+                  }`}
+                >
+                  <p className="text-xs uppercase tracking-wide text-gray-400 mb-2">
+                    {msg.role === "user" ? "You" : "JobPilot AI"}
+                  </p>
+                  <p className="text-gray-100">{msg.text}</p>
+                </div>
+              ))}
+
+              {aiLoading && (
+                <div className="bg-black/30 border border-white/10 rounded-2xl p-4 mr-10">
+                  <p className="text-gray-300">JobPilot AI is thinking...</p>
+                </div>
+              )}
+            </div>
+
+            <div className="grid md:grid-cols-[1fr_auto] gap-3">
+              <textarea
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    askAgent(aiInput)
+                  }
+                }}
+                placeholder="Ask JobPilot AI: Generate my resume, improve my skills, prepare interview answers..."
+                rows="3"
+                className="bg-black/30 border border-white/10 rounded-2xl p-4 outline-none resize-none"
+              />
+
+              <button
+                onClick={() => askAgent(aiInput)}
+                disabled={aiLoading}
+                className="bg-purple-600 hover:bg-purple-700 px-8 rounded-2xl font-semibold disabled:opacity-50"
+              >
+                {aiLoading ? "Thinking..." : "Ask AI"}
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-3 mt-4">
+              <button
+                onClick={() => {
+                  const lastAi = [...aiMessages].reverse().find((msg) => msg.role === "ai")
+                  if (lastAi) copyToClipboard(lastAi.text, "ai")
+                }}
+                className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm"
+              >
+                {copied === "ai" ? "Copied AI Response ✅" : "Copy Last AI Response"}
+              </button>
+
+              <button
+                onClick={useLastAiAsEmail}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl text-sm"
+              >
+                Use Last AI Response as Email
+              </button>
             </div>
           </div>
         </div>
@@ -626,6 +875,13 @@ ${profile.phone}`,
                 className="w-full mt-6 bg-white/10 hover:bg-white/20 py-3 rounded-xl"
               >
                 Open Job Page
+              </button>
+
+              <button
+                onClick={() => quickAskAgent("Generate a short professional application email for the selected job using my profile. Make it human, clean, and not repetitive.")}
+                className="w-full mt-3 bg-purple-600 hover:bg-purple-700 py-3 rounded-xl"
+              >
+                Ask AI for This Job
               </button>
             </div>
 
@@ -829,7 +1085,7 @@ ${profile.phone}`,
                       const pack = buildApplicationPack(job)
                       setSelectedJob(job)
                       setApplicationPack(pack)
-                      setEmailDraft(buildEmailDraft(job, pack))
+                      setEmailDraft(buildEmailDraft(job))
                       setRecipientEmail("")
                       setEmailStatus("")
                       scrollToSection("workspace")
@@ -864,7 +1120,8 @@ ${profile.phone}`,
           <p className="text-blue-400 font-semibold mb-3">Profile</p>
           <h2 className="text-5xl font-bold mb-4">Your Resume Details</h2>
           <p className="text-gray-400 text-lg">
-            JobPilot uses these details to prepare applications.
+            JobPilot AI uses these details to generate resumes, emails, skill plans,
+            and interview preparation.
           </p>
         </div>
 
