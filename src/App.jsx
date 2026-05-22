@@ -74,18 +74,18 @@ const jobRoleOptions = [
 ]
 
 const countryOptions = [
-  { code: "in", name: "India", currency: "INR", label: "â‚¹ / LPA" },
-  { code: "us", name: "United States", currency: "USD", label: "$ / year" },
-  { code: "gb", name: "United Kingdom", currency: "GBP", label: "Â£ / year" },
-  { code: "ca", name: "Canada", currency: "CAD", label: "C$ / year" },
-  { code: "au", name: "Australia", currency: "AUD", label: "A$ / year" },
-  { code: "de", name: "Germany", currency: "EUR", label: "â‚¬ / year" },
-  { code: "fr", name: "France", currency: "EUR", label: "â‚¬ / year" },
-  { code: "nz", name: "New Zealand", currency: "NZD", label: "NZ$ / year" },
-  { code: "za", name: "South Africa", currency: "ZAR", label: "R / year" },
-  { code: "br", name: "Brazil", currency: "BRL", label: "R$ / year" },
-  { code: "pl", name: "Poland", currency: "PLN", label: "zÅ‚ / year" },
-  { code: "at", name: "Austria", currency: "EUR", label: "â‚¬ / year" },
+  { code: "in", name: "India", currency: "INR", label: "INR / year" },
+  { code: "us", name: "United States", currency: "USD", label: "USD / year" },
+  { code: "gb", name: "United Kingdom", currency: "GBP", label: "GBP / year" },
+  { code: "ca", name: "Canada", currency: "CAD", label: "CAD / year" },
+  { code: "au", name: "Australia", currency: "AUD", label: "AUD / year" },
+  { code: "de", name: "Germany", currency: "EUR", label: "EUR / year" },
+  { code: "fr", name: "France", currency: "EUR", label: "EUR / year" },
+  { code: "nz", name: "New Zealand", currency: "NZD", label: "NZD / year" },
+  { code: "za", name: "South Africa", currency: "ZAR", label: "ZAR / year" },
+  { code: "br", name: "Brazil", currency: "BRL", label: "BRL / year" },
+  { code: "pl", name: "Poland", currency: "PLN", label: "PLN / year" },
+  { code: "at", name: "Austria", currency: "EUR", label: "EUR / year" },
 ]
 
 const salaryRanges = {
@@ -260,14 +260,8 @@ function cleanFileName(name) {
 }
 
 function getDocumentTitle(text, profile, documentType = "response") {
-  if (documentType === "resume") {
-    return `${profile?.name || "Candidate"} Resume`
-  }
-
-  if (documentType === "letter") {
-    return `${profile?.name || "Candidate"} Application Letter`
-  }
-
+  if (documentType === "resume") return `${profile?.name || "Candidate"} Resume`
+  if (documentType === "letter") return `${profile?.name || "Candidate"} Application Letter`
   return "JobPilot AI Response"
 }
 
@@ -298,11 +292,7 @@ function buildCleanResumeHtml(profile) {
 
   const bulletList = (items) => {
     const cleanItems = items.filter(Boolean)
-
-    if (cleanItems.length === 0) {
-      return `<li>Not provided</li>`
-    }
-
+    if (cleanItems.length === 0) return `<li>Not provided</li>`
     return cleanItems.map((item) => `<li>${clean(item)}</li>`).join("")
   }
 
@@ -311,9 +301,7 @@ function buildCleanResumeHtml(profile) {
   const strengths = splitList(profile?.softSkills)
   const projects = Array.isArray(profile?.projects) ? profile.projects : []
   const educations = Array.isArray(profile?.educations) ? profile.educations : []
-  const certifications = Array.isArray(profile?.certifications)
-    ? profile.certifications
-    : []
+  const certifications = Array.isArray(profile?.certifications) ? profile.certifications : []
   const languages = Array.isArray(profile?.languages) ? profile.languages : []
 
   const projectHtml =
@@ -351,10 +339,7 @@ function buildCleanResumeHtml(profile) {
             (edu) => `
               <div class="resume-item">
                 <div class="resume-item-title">${clean(edu.degree, "Education")}</div>
-                <div class="resume-item-sub">${clean(
-                  edu.college,
-                  "College not provided"
-                )}</div>
+                <div class="resume-item-sub">${clean(edu.college, "College not provided")}</div>
                 <div class="resume-item-meta">
                   ${edu.branch ? `Course/Branch: ${clean(edu.branch)} | ` : ""}
                   ${edu.year ? `Year: ${clean(edu.year)} | ` : ""}
@@ -372,9 +357,9 @@ function buildCleanResumeHtml(profile) {
           .filter((cert) => cert.name)
           .map(
             (cert) =>
-              `<li>${clean(cert.name)}${
-                cert.issuer ? ` - ${clean(cert.issuer)}` : ""
-              }${cert.year ? ` (${clean(cert.year)})` : ""}</li>`
+              `<li>${clean(cert.name)}${cert.issuer ? ` - ${clean(cert.issuer)}` : ""}${
+                cert.year ? ` (${clean(cert.year)})` : ""
+              }</li>`
           )
           .join("")}</ul>`
       : `<ul><li>Not provided</li></ul>`
@@ -385,9 +370,7 @@ function buildCleanResumeHtml(profile) {
           .filter((lang) => lang.name)
           .map(
             (lang) =>
-              `<li>${clean(lang.name)}${
-                lang.level ? ` - ${clean(lang.level)}` : ""
-              }</li>`
+              `<li>${clean(lang.name)}${lang.level ? ` - ${clean(lang.level)}` : ""}</li>`
           )
           .join("")}</ul>`
       : `<ul><li>Not provided</li></ul>`
@@ -395,14 +378,14 @@ function buildCleanResumeHtml(profile) {
   return `
     <div class="resume-header">
       <h1>${clean(profile?.name, "YOUR NAME")}</h1>
-      <p>
-        Phone: ${clean(profile?.phone, "+91 XXXXX XXXXX")} |
-        Email: ${clean(profile?.email, "yourmail@gmail.com")}
-      </p>
-      <p>
-        LinkedIn: ${clean(profile?.linkedin, "linkedin.com/in/yourname")} |
-        GitHub: ${clean(profile?.github, "github.com/yourname")}
-      </p>
+      <p>Phone: ${clean(profile?.phone, "+91 XXXXX XXXXX")} | Email: ${clean(
+        profile?.email,
+        "yourmail@gmail.com"
+      )}</p>
+      <p>LinkedIn: ${clean(profile?.linkedin, "linkedin.com/in/yourname")} | GitHub: ${clean(
+        profile?.github,
+        "github.com/yourname"
+      )}</p>
       <p>Location: ${clean(profile?.location, "City, State, India")}</p>
     </div>
 
@@ -450,13 +433,7 @@ function buildCleanResumeHtml(profile) {
         ${bulletList(
           strengths.length > 0
             ? strengths
-            : [
-                "Quick Learner",
-                "Problem Solving",
-                "Team Collaboration",
-                "Good Communication",
-                "Time Management",
-              ]
+            : ["Quick Learner", "Problem Solving", "Team Collaboration", "Good Communication", "Time Management"]
         )}
       </ul>
     </section>
@@ -464,7 +441,6 @@ function buildCleanResumeHtml(profile) {
     <section>
       <h2>Declaration</h2>
       <p>I hereby declare that the above information is true to the best of my knowledge.</p>
-
       <div class="declaration-grid">
         <div>
           <p><strong>Place:</strong> ${clean(profile?.location, "Your City")}</p>
@@ -488,7 +464,6 @@ function getProfessionalDocumentHtml(
   const title = getDocumentTitle(text, profile, documentType)
   const isResume = documentType === "resume"
   const isLetter = documentType === "letter"
-
   const resumeBody = buildCleanResumeHtml(profile)
   const normalBody = markdownToProfessionalHtml(text)
 
@@ -512,16 +487,13 @@ function getProfessionalDocumentHtml(
     .resume-header{display:none}
     section{margin-top:0;margin-bottom:14px}
     h2{font-size:15px;color:#334155;text-transform:uppercase;border-bottom:2px solid #64748b;padding-bottom:6px;margin:18px 0 9px;letter-spacing:.8px}
-    h3{font-size:13px;margin:10px 0 4px;color:#111827}
     p,li{font-size:12.5px;line-height:1.5;margin:0 0 6px}
     ul{margin:0;padding-left:18px}
-    li{margin-bottom:3px}
     .resume-item{margin-bottom:10px}
     .resume-item-title{font-size:13px;font-weight:700;color:#111827;margin-bottom:2px}
     .resume-item-sub,.resume-item-meta{font-size:12px;color:#4b5563;margin-bottom:2px}
     .declaration-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:12px}
     .declaration-grid div:last-child{text-align:right}
-    strong{color:#111827}
     @media print{body{background:white}.page{margin:0;max-width:none;box-shadow:none}.no-print{display:none!important}}
   </style>
 </head>
@@ -572,16 +544,13 @@ function getProfessionalDocumentHtml(
     .resume-header p{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#4b5563;margin:3px 0;line-height:1.4}
     section{margin-top:14px}
     h2{font-family:Arial,Helvetica,sans-serif;font-size:14px;letter-spacing:3px;text-transform:uppercase;margin:18px 0 9px;color:#111;border-bottom:1px solid #111;padding-bottom:5px}
-    h3{font-family:Arial,Helvetica,sans-serif;font-size:13px;margin:10px 0 4px}
     p,li{font-size:12.8px;line-height:1.55;margin:0 0 6px}
     ul{margin:0;padding-left:18px}
-    li{margin-bottom:3px}
     .resume-item{margin-bottom:10px}
     .resume-item-title{font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#111;margin-bottom:2px}
     .resume-item-sub,.resume-item-meta{font-size:12px;color:#4b5563;margin-bottom:2px}
     .declaration-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:12px}
     .declaration-grid div:last-child{text-align:right}
-    strong{color:#111}
     @media print{body{background:white}.page{margin:0;max-width:none;box-shadow:none;border-radius:0}.no-print{display:none!important}}
   </style>
 </head>
@@ -606,7 +575,6 @@ function getProfessionalDocumentHtml(
     .letter-header p{font-size:12.5px;color:#374151;margin:3px 0}
     .letter-body p{font-size:13.5px;line-height:1.75;margin:0 0 13px}
     h2,h3{color:#1f4e79}
-    strong{color:#111827}
     @media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;padding:36px 44px}.no-print{display:none!important}}
   </style>
 </head>
@@ -617,9 +585,7 @@ function getProfessionalDocumentHtml(
       <p>${escapeHtml(profile?.email || "Email not provided")} | ${escapeHtml(profile?.phone || "Phone not provided")}</p>
       <p>${escapeHtml(profile?.location || "Location not provided")}</p>
     </div>
-    <div class="letter-body">
-      <p>${normalBody}</p>
-    </div>
+    <div class="letter-body"><p>${normalBody}</p></div>
   </div>
 </body>
 </html>`
@@ -643,7 +609,6 @@ function getProfessionalDocumentHtml(
     p,li{font-size:13.5px;line-height:1.68;margin:0 0 10px}
     ul{margin:0 0 12px;padding-left:20px}
     li{margin-bottom:5px}
-    strong{color:#111827}
     @media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;border-radius:0;padding:34px 42px}.no-print{display:none!important}}
   </style>
 </head>
@@ -672,9 +637,7 @@ function getProfessionalDocumentHtml(
     .resume-header h1{margin:0 0 8px;font-size:28px;letter-spacing:1px;color:#1f4e79;text-transform:uppercase;font-weight:800}
     .resume-header p{margin:3px 0;font-size:12.5px;line-height:1.4}
     section{margin-top:15px}
-    h1{font-size:28px;margin-bottom:10px}
     h2{font-size:14px;color:#1f4e79;text-transform:uppercase;border-bottom:1.8px solid #1f4e79;padding-bottom:5px;margin:18px 0 9px;letter-spacing:.4px}
-    h3{font-size:13px;margin:10px 0 4px;color:#111827}
     p{font-size:12.5px;line-height:1.55;margin:0 0 7px}
     ul{margin:0;padding-left:18px}
     li{font-size:12.5px;line-height:1.5;margin-bottom:3px}
@@ -684,7 +647,6 @@ function getProfessionalDocumentHtml(
     .resume-item-meta{font-size:12px;color:#4b5563;margin-bottom:3px}
     .declaration-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px}
     .declaration-grid div:last-child{text-align:right}
-    strong{color:#111827}
     @media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;padding:28px 36px}.no-print{display:none!important}}
   </style>
 </head>
@@ -764,7 +726,7 @@ function AccordionCard({
       >
         <div>
           <div className="flex items-center gap-3">
-            <span className="text-xl">{isOpen ? "â–¾" : "â–¸"}</span>
+            <span className="text-xl">{isOpen ? "▾" : "▸"}</span>
             <h3 className="text-xl font-bold">{title}</h3>
             <span
               className={`text-xs px-3 py-1 rounded-full ${
@@ -900,7 +862,7 @@ function TemplateSelector({ selectedResumeTemplate, setSelectedResumeTemplate })
             <div className="flex items-center justify-between gap-2 mb-2">
               <p className="font-bold">{template.name}</p>
               {selectedResumeTemplate === template.id && (
-                <span className="text-green-300 text-sm">âœ“</span>
+                <span className="text-green-300 text-sm">✓</span>
               )}
             </div>
 
@@ -962,13 +924,13 @@ function TemplateSelector({ selectedResumeTemplate, setSelectedResumeTemplate })
   )
 }
 
-function JobRoleSelector({ value, onChange, inputClass }) {
+function JobRoleSelector({ value, onChange }) {
   const [roleSearch, setRoleSearch] = useState(value || "")
   const [showOtherInput, setShowOtherInput] = useState(false)
 
-  const filteredRoles = jobRoleOptions.filter((role) =>
-    role.toLowerCase().includes(roleSearch.toLowerCase())
-  )
+  const filteredRoles = jobRoleOptions
+    .filter((role) => role.toLowerCase().includes(roleSearch.toLowerCase()))
+    .slice(0, 8)
 
   const handleRoleSelect = (role) => {
     if (role === "Other") {
@@ -984,25 +946,25 @@ function JobRoleSelector({ value, onChange, inputClass }) {
   }
 
   return (
-    <div className="space-y-3 mt-2">
+    <div className="space-y-2 mt-2">
       <input
         value={roleSearch}
         onChange={(e) => {
           setRoleSearch(e.target.value)
           setShowOtherInput(false)
         }}
-        placeholder="Search role like React, Python, Data..."
-        className={inputClass}
+        placeholder="Search role..."
+        className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-3 outline-none focus:border-blue-400 transition"
       />
 
-      <div className="max-h-44 overflow-y-auto bg-black/30 border border-white/10 rounded-xl p-2 space-y-2">
+      <div className="max-h-40 overflow-y-auto bg-black/20 border border-white/10 rounded-xl p-2 space-y-1">
         {filteredRoles.length === 0 ? (
           <button
             type="button"
             onClick={() => handleRoleSelect("Other")}
-            className="w-full text-left px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700"
+            className="w-full text-left px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-sm font-semibold"
           >
-            Other — type your own role
+            Other - type your own role
           </button>
         ) : (
           filteredRoles.map((role) => (
@@ -1010,7 +972,7 @@ function JobRoleSelector({ value, onChange, inputClass }) {
               type="button"
               key={role}
               onClick={() => handleRoleSelect(role)}
-              className={`w-full text-left px-3 py-2 rounded-lg transition ${
+              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                 value === role
                   ? "bg-blue-600 text-white"
                   : "bg-white/5 hover:bg-white/10 text-gray-200"
@@ -1026,15 +988,15 @@ function JobRoleSelector({ value, onChange, inputClass }) {
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Type your custom job role"
-          className={inputClass}
+          placeholder="Type custom job role"
+          className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-3 outline-none focus:border-blue-400 transition"
           autoFocus
         />
       )}
 
       {value && (
-        <p className="text-xs text-green-300">
-          Selected role: <span className="font-semibold">{value}</span>
+        <p className="text-xs text-green-300 truncate">
+          Selected: <span className="font-semibold">{value}</span>
         </p>
       )}
     </div>
@@ -1100,7 +1062,7 @@ function MiniCopyCard({ title, text, copied, copyKey, onCopy }) {
           onClick={() => onCopy(text, copyKey)}
           className="bg-white/10 px-3 py-1 rounded-lg text-sm"
         >
-          {copied === copyKey ? "Copied âœ…" : "Copy"}
+          {copied === copyKey ? "Copied" : "Copy"}
         </button>
       </div>
       <p className="text-gray-300 text-sm whitespace-pre-line max-h-72 overflow-y-auto">
@@ -1144,7 +1106,7 @@ function App() {
     const savedMessages = safeParse(localStorage.getItem("jobpilot_ai_messages"), [
       {
         role: "ai",
-        text: "Hi ðŸ‘‹ I am JobPilot AI. Fill your candidate details, then ask me to generate a professional resume, improve your skills, prepare for interviews, or write a job application email.",
+        text: "Hi, I am JobPilot AI. Fill your candidate details, then ask me to generate a professional resume, improve your skills, prepare for interviews, or write a job application email.",
         docType: "response",
       },
     ])
@@ -1158,8 +1120,7 @@ function App() {
   const [aiInput, setAiInput] = useState("")
   const [aiLoading, setAiLoading] = useState(false)
   const [openProfileSection, setOpenProfileSection] = useState("personal")
-  const [selectedResumeTemplate, setSelectedResumeTemplate] =
-    useState("classic-photo")
+  const [selectedResumeTemplate, setSelectedResumeTemplate] = useState("classic-photo")
 
   const aiChatRef = useRef(null)
   const aiInputRef = useRef(null)
@@ -1175,10 +1136,7 @@ function App() {
   }, [profile])
 
   useEffect(() => {
-    localStorage.setItem(
-      "jobpilot_saved_applications",
-      JSON.stringify(savedApplications)
-    )
+    localStorage.setItem("jobpilot_saved_applications", JSON.stringify(savedApplications))
   }, [savedApplications])
 
   useEffect(() => {
@@ -1231,19 +1189,42 @@ function App() {
 
   const isFilled = (value) => value && String(value).trim().length > 3
 
+  const getActiveSalaryRanges = () => {
+    return salaryRanges[search.country] || salaryRanges.default
+  }
+
+  const getSelectedSalaryRange = () => {
+    return (
+      getActiveSalaryRanges().find((range) => range.label === search.salaryRange) ||
+      getActiveSalaryRanges()[0]
+    )
+  }
+
+  const getSelectedCountry = () => {
+    return (
+      countryOptions.find((country) => country.code === search.country) ||
+      countryOptions[0]
+    )
+  }
+
   const getSalaryRangeText = (range) => {
     if (range === "Any Salary") return "No specific salary preference"
     return range
   }
 
   const getSalaryScore = (job) => {
-    const activeRanges = salaryRanges[search.country] || salaryRanges.default
-    const selectedSalary =
-      activeRanges.find((range) => range.label === search.salaryRange) ||
-      activeRanges[0]
+    const selectedSalary = getSelectedSalaryRange()
 
     if (!selectedSalary.required) return 0
-    return job.salaryAvailable ? 8 : -20
+    if (!job.salaryAvailable) return -20
+
+    const min = job.salaryMin || job.salaryMax || 0
+    const max = job.salaryMax || job.salaryMin || 0
+
+    if (selectedSalary.min > 0 && max < selectedSalary.min) return -20
+    if (selectedSalary.max > 0 && min > selectedSalary.max) return -20
+
+    return 8
   }
 
   const projectsText = useMemo(() => {
@@ -1296,10 +1277,7 @@ Description: ${exp.description}`
   const achievementText = useMemo(() => {
     return profile.achievements
       .filter((ach) => ach.title || ach.description)
-      .map(
-        (ach, index) =>
-          `Achievement ${index + 1}: ${ach.title} - ${ach.description}`
-      )
+      .map((ach, index) => `Achievement ${index + 1}: ${ach.title} - ${ach.description}`)
       .join("\n")
   }, [profile.achievements])
 
@@ -1399,24 +1377,6 @@ Description: ${exp.description}`
   const rankedJobs = jobs
     .map((job) => ({ ...job, matchScore: calculateMatch(job) }))
     .sort((a, b) => b.matchScore - a.matchScore)
-
-  const getActiveSalaryRanges = () => {
-    return salaryRanges[search.country] || salaryRanges.default
-  }
-
-  const getSelectedSalaryRange = () => {
-    return (
-      getActiveSalaryRanges().find((range) => range.label === search.salaryRange) ||
-      getActiveSalaryRanges()[0]
-    )
-  }
-
-  const getSelectedCountry = () => {
-    return (
-      countryOptions.find((country) => country.code === search.country) ||
-      countryOptions[0]
-    )
-  }
 
   const findJobs = async () => {
     setLoadingJobs(true)
@@ -1518,17 +1478,16 @@ ${profile.phone}`,
       company: job.company,
       location: job.location,
       salary: job.salary || "Salary not listed",
-      salaryAvailable: Boolean(job.salaryAvailable),
-      salaryMin: job.salaryMin || null,
-      salaryMax: job.salaryMax || null,
-      country: job.country || search.country,
+      salaryAvailable: job.salaryAvailable,
+      salaryMin: job.salaryMin,
+      salaryMax: job.salaryMax,
       category: job.category || "Real Job",
       url: job.url,
       description: job.description,
       match: `${job.matchScore}%`,
       status: "Ready",
       date: new Date().toLocaleDateString(),
-      note: `Salary filter: ${search.salaryRange}`,
+      note: `Salary preference: ${search.salaryRange}`,
     }
 
     setSelectedJob(cleanJob)
@@ -1630,9 +1589,7 @@ ${profile.phone}`,
   }
 
   const getLatestAiMessage = () => {
-    return [...aiMessages]
-      .reverse()
-      .find((msg) => msg.role === "ai" && msg.text)
+    return [...aiMessages].reverse().find((msg) => msg.role === "ai" && msg.text)
   }
 
   const typeAiResponse = (reply, documentType = "response") => {
@@ -1725,9 +1682,7 @@ ${profile.phone}`,
       try {
         data = JSON.parse(text)
       } catch {
-        throw new Error(
-          `Backend returned non-JSON response. API URL used: ${API_URL}`
-        )
+        throw new Error(`Backend returned non-JSON response. API URL used: ${API_URL}`)
       }
 
       if (!res.ok || !data.success) {
@@ -1775,7 +1730,7 @@ ${profile.phone}`,
       body: lastAi.text,
     })
 
-    setEmailStatus("AI response copied into email draft âœ…")
+    setEmailStatus("AI response copied into email draft")
     scrollToSection("workspace")
   }
 
@@ -1797,7 +1752,7 @@ ${profile.phone}`,
     )}`
 
     window.open(gmailUrl, "_blank")
-    setEmailStatus("Gmail opened âœ… Review and click Send in Gmail.")
+    setEmailStatus("Gmail opened. Review and click Send in Gmail.")
 
     setSavedApplications((prev) =>
       prev.map((job) =>
@@ -1892,7 +1847,7 @@ ${profile.phone}`,
     setAiMessages([
       {
         role: "ai",
-        text: "Chat cleared âœ… Ask me anything about resumes, skills, interviews, jobs, or applications.",
+        text: "Chat cleared. Ask me anything about resumes, skills, interviews, jobs, or applications.",
         docType: "response",
       },
     ])
@@ -1920,7 +1875,7 @@ ${profile.phone}`,
             onClick={() => scrollToSection("home")}
             className="text-3xl font-bold text-blue-400 cursor-pointer"
           >
-            JobPilot ðŸš€
+            JobPilot
           </h1>
 
           <div className="hidden md:flex gap-6 text-gray-300">
@@ -2087,7 +2042,7 @@ ${profile.phone}`,
                     Latest document is ready
                   </p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Type: {latestAi.docType || "response"} â€” Copy it, export as PDF, or download as DOC.
+                    Type: {latestAi.docType || "response"} - Copy, export PDF, or download DOC.
                   </p>
                 </div>
 
@@ -2097,16 +2052,13 @@ ${profile.phone}`,
                     onClick={() => copyToClipboard(latestAi.text, "latest-doc")}
                     className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold"
                   >
-                    {copied === "latest-doc" ? "Copied âœ…" : "Copy"}
+                    {copied === "latest-doc" ? "Copied" : "Copy"}
                   </button>
 
                   <button
                     type="button"
                     onClick={() =>
-                      exportMessageAsPdf(
-                        latestAi.text,
-                        latestAi.docType || "response"
-                      )
+                      exportMessageAsPdf(latestAi.text, latestAi.docType || "response")
                     }
                     className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-xl text-sm font-semibold"
                   >
@@ -2116,10 +2068,7 @@ ${profile.phone}`,
                   <button
                     type="button"
                     onClick={() =>
-                      exportMessageAsDoc(
-                        latestAi.text,
-                        latestAi.docType || "response"
-                      )
+                      exportMessageAsDoc(latestAi.text, latestAi.docType || "response")
                     }
                     className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-xl text-sm font-semibold"
                   >
@@ -2160,7 +2109,7 @@ ${profile.phone}`,
                         onClick={() => copyToClipboard(msg.text, `chat-${index}`)}
                         className="bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold"
                       >
-                        {copied === `chat-${index}` ? "Copied âœ…" : "Copy"}
+                        {copied === `chat-${index}` ? "Copied" : "Copy"}
                       </button>
 
                       {msg.role === "ai" && (
@@ -2168,10 +2117,7 @@ ${profile.phone}`,
                           <button
                             type="button"
                             onClick={() =>
-                              exportMessageAsPdf(
-                                msg.text,
-                                msg.docType || "response"
-                              )
+                              exportMessageAsPdf(msg.text, msg.docType || "response")
                             }
                             className="bg-purple-600 hover:bg-purple-700 px-3 py-1.5 rounded-lg text-xs font-semibold"
                           >
@@ -2181,10 +2127,7 @@ ${profile.phone}`,
                           <button
                             type="button"
                             onClick={() =>
-                              exportMessageAsDoc(
-                                msg.text,
-                                msg.docType || "response"
-                              )
+                              exportMessageAsDoc(msg.text, msg.docType || "response")
                             }
                             className="bg-green-600 hover:bg-green-700 px-3 py-1.5 rounded-lg text-xs font-semibold"
                           >
@@ -2243,7 +2186,7 @@ ${profile.phone}`,
                 }}
                 className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm"
               >
-                {copied === "ai" ? "Copied AI Response âœ…" : "Copy Last AI Response"}
+                {copied === "ai" ? "Copied AI Response" : "Copy Last AI Response"}
               </button>
 
               <button
@@ -2265,7 +2208,7 @@ ${profile.phone}`,
           description="Search real jobs from your backend connected to Adzuna."
         />
 
-        <div className="grid lg:grid-cols-6 gap-4 mb-6">
+        <div className="grid lg:grid-cols-6 gap-4 mb-6 items-start">
           <SearchBox label="Select Job Role">
             <JobRoleSelector
               value={search.role}
@@ -2275,7 +2218,6 @@ ${profile.phone}`,
                   role,
                 }))
               }
-              inputClass={inputClass}
             />
           </SearchBox>
 
@@ -2347,14 +2289,14 @@ ${profile.phone}`,
             type="button"
             onClick={findJobs}
             disabled={loadingJobs}
-            className="bg-blue-600 hover:bg-blue-700 rounded-2xl font-bold disabled:opacity-50"
+            className="bg-blue-600 hover:bg-blue-700 rounded-2xl font-bold disabled:opacity-50 min-h-[72px] mt-0"
           >
             {loadingJobs ? "Searching..." : "Find Jobs"}
           </button>
         </div>
 
         {jobError && (
-          <div className="bg-red-500/20 border border-red-400/20 text-red-200 rounded-2xl p-4 mb-6">
+          <div className="bg-yellow-500/20 border border-yellow-400/20 text-yellow-100 rounded-2xl p-4 mb-6">
             {jobError}
           </div>
         )}
@@ -2376,26 +2318,38 @@ ${profile.phone}`,
                 </span>
               </div>
 
-              <div className="space-y-2 text-gray-400 text-sm mb-4">
-                <p>ðŸ“ {job.location}</p>
-                <p>
-                  ðŸ’°{" "}
+              <div className="grid grid-cols-1 gap-2 text-sm mb-4">
+                <div className="flex items-start gap-2 rounded-xl bg-black/20 border border-white/10 px-3 py-2">
+                  <span className="text-gray-500 min-w-20">Location</span>
+                  <span className="text-gray-200">{job.location}</span>
+                </div>
+
+                <div className="flex items-start gap-2 rounded-xl bg-black/20 border border-white/10 px-3 py-2">
+                  <span className="text-gray-500 min-w-20">Salary</span>
                   {job.salaryAvailable ? (
-                    <span className="text-green-300">{job.salary}</span>
+                    <span className="text-green-300 font-semibold">{job.salary}</span>
                   ) : (
-                    <span className="text-yellow-300">Salary not listed</span>
+                    <span className="text-yellow-300 font-semibold">Salary not listed</span>
                   )}
-                </p>
-                <p>
-                  ðŸŽšï¸ Filter: {search.salaryRange}
-                  {getSelectedSalaryRange().required && (
-                    <span className="text-green-300"> â€¢ salary verified</span>
-                  )}
-                </p>
-                <p>ðŸ·ï¸ {job.category}</p>
+                </div>
+
+                <div className="flex items-start gap-2 rounded-xl bg-black/20 border border-white/10 px-3 py-2">
+                  <span className="text-gray-500 min-w-20">Filter</span>
+                  <span className="text-gray-200">
+                    {search.salaryRange}
+                    {getSelectedSalaryRange().required && (
+                      <span className="text-green-300"> - salary listed only</span>
+                    )}
+                  </span>
+                </div>
+
+                <div className="flex items-start gap-2 rounded-xl bg-black/20 border border-white/10 px-3 py-2">
+                  <span className="text-gray-500 min-w-20">Category</span>
+                  <span className="text-gray-200">{job.category}</span>
+                </div>
               </div>
 
-              <p className="text-gray-300 text-sm leading-relaxed h-24 overflow-hidden mb-4">
+              <p className="text-gray-300 text-sm leading-relaxed max-h-28 overflow-y-auto mb-4 pr-1">
                 {job.description}
               </p>
 
@@ -2440,11 +2394,11 @@ ${profile.phone}`,
               <p className="text-gray-300 text-lg mb-4">{selectedJob.company}</p>
 
               <div className="space-y-2 text-gray-400">
-                <p>ðŸ“ {selectedJob.location}</p>
-                <p>ðŸ’° {selectedJob.salary}</p>
-                <p>ðŸŽšï¸ Salary Preference: {search.salaryRange}</p>
-                <p>ðŸŽ¯ {selectedJob.match} Match</p>
-                <p>ðŸ“Œ Status: {selectedJob.status}</p>
+                <p>Location: {selectedJob.location}</p>
+                <p>Salary: {selectedJob.salary}</p>
+                <p>Salary Preference: {search.salaryRange}</p>
+                <p>Match: {selectedJob.match}</p>
+                <p>Status: {selectedJob.status}</p>
               </div>
 
               <button
@@ -2607,10 +2561,10 @@ ${profile.phone}`,
                 <p className="text-gray-400 mt-1">{job.company}</p>
 
                 <div className="space-y-2 text-gray-400 mt-4">
-                  <p>ðŸ“ {job.location}</p>
-                  <p>ðŸŽ¯ {job.match} Match</p>
-                  <p>ðŸ“… {job.date}</p>
-                  {job.note && <p>ðŸ“ {job.note}</p>}
+                  <p>Location: {job.location}</p>
+                  <p>Match: {job.match}</p>
+                  <p>Date: {job.date}</p>
+                  {job.note && <p>Note: {job.note}</p>}
                 </div>
 
                 <select
@@ -2748,7 +2702,7 @@ ${profile.phone}`,
                   }`}
                 >
                   <span>{label}</span>
-                  <span>{sectionStatus[id] ? "âœ…" : "â—‹"}</span>
+                  <span>{sectionStatus[id] ? "Done" : "Open"}</span>
                 </button>
               ))}
             </div>
