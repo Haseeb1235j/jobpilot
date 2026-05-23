@@ -368,7 +368,7 @@ function cleanFileName(name) {
     .toLowerCase()
 }
 
-function getDocumentTitle(text, profile, documentType = "response") {
+function getDocumentTitle(text, profile, documentType = "chat") {
   if (documentType === "resume") return `${profile?.name || "Candidate"} Resume`
   if (documentType === "letter") return `${profile?.name || "Candidate"} Application Letter`
   return "JobPilot AI Response"
@@ -645,7 +645,7 @@ function getProfessionalDocumentHtml(
   text,
   profile,
   template = "classic-photo",
-  documentType = "response"
+  documentType = "chat"
 ) {
   const title = getDocumentTitle(text, profile, documentType)
   const isResume = documentType === "resume"
@@ -1408,13 +1408,17 @@ function App() {
       {
         role: "ai",
         text: "Hi, I am JobPilot AI. Fill your candidate details, then ask me to generate a professional resume, improve your skills, prepare for interviews, or write a job application email.",
-        docType: "response",
-      },
+        docType: "chat",
+        exportable: false,
+        title: "Chat Response",
+      }
     ])
 
     return savedMessages.map((msg) => ({
       ...msg,
-      docType: msg.docType || "response",
+      docType: msg.docType || "chat",
+      exportable: Boolean(msg.exportable),
+      title: msg.title || "Chat Response",
     }))
   })
 
@@ -1818,7 +1822,7 @@ ${profile.phone}`,
     setTimeout(() => setCopied(""), 1500)
   }
 
-  const exportMessageAsPdf = (text, documentType = "response") => {
+  const exportMessageAsPdf = (text, documentType = "chat") => {
     const html = getProfessionalDocumentHtml(
       text,
       profile,
@@ -1863,7 +1867,7 @@ ${profile.phone}`,
     setTimeout(() => URL.revokeObjectURL(url), 10000)
   }
 
-  const exportMessageAsDoc = (text, documentType = "response") => {
+  const exportMessageAsDoc = (text, documentType = "chat") => {
     const html = getProfessionalDocumentHtml(
       text,
       profile,
@@ -1893,7 +1897,7 @@ ${profile.phone}`,
     return [...aiMessages].reverse().find((msg) => msg.role === "ai" && msg.text)
   }
 
-  const typeAiResponse = (reply, documentType = "response") => {
+  const typeAiResponse = (reply, documentType = "chat", exportable = false, title = "Chat Response") => {
     if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
 
     let index = 0
@@ -1905,6 +1909,8 @@ ${profile.phone}`,
         role: "ai",
         text: "",
         docType: documentType,
+        exportable,
+        title,
       },
     ])
 
@@ -1917,6 +1923,8 @@ ${profile.phone}`,
           ...updated[updated.length - 1],
           text: finalReply.slice(0, index),
           docType: documentType,
+          exportable,
+          title,
         }
         return updated
       })
@@ -1937,6 +1945,7 @@ ${profile.phone}`,
     const lowerMessage = cleanMessage.toLowerCase()
 
     if (
+      defaultType === "resume" ||
       lowerMessage.includes("resume") ||
       lowerMessage.includes("cv") ||
       lowerMessage.includes("add this in resume") ||
@@ -1950,19 +1959,38 @@ ${profile.phone}`,
     }
 
     if (
+      defaultType === "letter" ||
       lowerMessage.includes("cover letter") ||
       lowerMessage.includes("application letter") ||
       lowerMessage.includes("job email") ||
       lowerMessage.includes("email for job") ||
-      lowerMessage.includes("mail for job")
+      lowerMessage.includes("email for this job") ||
+      lowerMessage.includes("mail for job") ||
+      lowerMessage.includes("mail for this job")
     ) {
       return "letter"
     }
 
-    return defaultType
+    if (
+      defaultType === "guide" ||
+      lowerMessage.includes("roadmap") ||
+      lowerMessage.includes("interview") ||
+      lowerMessage.includes("prepare") ||
+      lowerMessage.includes("improve my skills") ||
+      lowerMessage.includes("skill improvement") ||
+      lowerMessage.includes("learning plan")
+    ) {
+      return "guide"
+    }
+
+    return "chat"
   }
 
-  const askAgent = async (messageText, documentType = "response") => {
+  const isExportableDocType = (docType) =>
+    ["resume", "letter", "guide"].includes(docType)
+
+
+  const askAgent = async (messageText, documentType = "chat") => {
     const cleanMessage = messageText.trim()
     if (!cleanMessage) return
 
@@ -1973,7 +2001,9 @@ ${profile.phone}`,
       {
         role: "user",
         text: cleanMessage,
-        docType: "response",
+        docType: "chat",
+        exportable: false,
+        title: "User Message",
       },
     ])
 
@@ -2022,7 +2052,12 @@ ${profile.phone}`,
       }
 
       setAiLoading(false)
-      typeAiResponse(data.reply, smartDocType)
+      typeAiResponse(
+        data.reply,
+        data.docType || smartDocType,
+        Boolean(data.exportable) || isExportableDocType(data.docType || smartDocType),
+        data.title || "AI Response"
+      )
     } catch (error) {
       console.error("AI agent frontend error:", error)
       setAiLoading(false)
@@ -2031,7 +2066,9 @@ ${profile.phone}`,
         {
           role: "ai",
           text: `Sorry, AI failed: ${error.message}`,
-          docType: "response",
+          docType: "chat",
+          exportable: false,
+          title: "AI Error",
         },
       ])
     } finally {
@@ -2039,7 +2076,7 @@ ${profile.phone}`,
     }
   }
 
-  const quickAskAgent = (prompt, documentType = "response") => {
+  const quickAskAgent = (prompt, documentType = "chat") => {
     askAgent(prompt, documentType)
     setTimeout(() => scrollToSection("ai-agent"), 100)
   }
@@ -2180,7 +2217,9 @@ ${profile.phone}`,
       {
         role: "ai",
         text: "Chat cleared. Ask me anything about resumes, skills, interviews, jobs, or applications.",
-        docType: "response",
+        docType: "chat",
+        exportable: false,
+        title: "Chat Response",
       },
     ])
 
@@ -2192,7 +2231,7 @@ ${profile.phone}`,
     }, 100)
   }
 
-  const latestAi = getLatestAiMessage()
+  const latestAi = [...aiMessages].reverse().find((msg) => msg.role === "ai" && msg.text && msg.exportable)
   const accordionProps = {
     openProfileSection,
     setOpenProfileSection,
@@ -2312,7 +2351,7 @@ ${profile.phone}`,
                 onClick={() =>
                   quickAskAgent(
                     "Check my candidate profile and tell me what resume details are missing or weak. Give exact improvements.",
-                    "response"
+                    "chat"
                   )
                 }
               >
@@ -2324,7 +2363,7 @@ ${profile.phone}`,
                 onClick={() =>
                   quickAskAgent(
                     "Create a personalized 30-day skill improvement roadmap for my target role based on my current skills, education, projects, and salary preference.",
-                    "response"
+                    "guide"
                   )
                 }
               >
@@ -2336,7 +2375,7 @@ ${profile.phone}`,
                 onClick={() =>
                   quickAskAgent(
                     "Prepare me for interviews for my target role. Give common questions, strong sample answers, and practice advice based on my skills and projects.",
-                    "response"
+                    "guide"
                   )
                 }
               >
@@ -2428,9 +2467,9 @@ ${profile.phone}`,
                       <p className="text-xs uppercase tracking-wide text-gray-400">
                         {msg.role === "user" ? "You" : "JobPilot AI"}
                       </p>
-                      {msg.role === "ai" && (
+                      {msg.role === "ai" && msg.exportable && (
                         <p className="text-[11px] text-gray-500 mt-1">
-                          Export type: {msg.docType || "response"}
+                          Export type: {msg.docType || "chat"}
                         </p>
                       )}
                     </div>
@@ -2444,7 +2483,7 @@ ${profile.phone}`,
                         {copied === `chat-${index}` ? "Copied" : "Copy"}
                       </button>
 
-                      {msg.role === "ai" && (
+                      {msg.role === "ai" && msg.exportable && (
                         <>
                           <button
                             type="button"
@@ -2491,7 +2530,7 @@ ${profile.phone}`,
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault()
-                    askAgent(aiInput, "response")
+                    askAgent(aiInput, "chat")
                   }
                 }}
                 placeholder="Ask JobPilot AI..."
@@ -2501,7 +2540,7 @@ ${profile.phone}`,
 
               <button
                 type="button"
-                onClick={() => askAgent(aiInput, "response")}
+                onClick={() => askAgent(aiInput, "chat")}
                 disabled={aiLoading}
                 className="bg-purple-600 hover:bg-purple-700 px-8 rounded-2xl font-semibold disabled:opacity-50"
               >
@@ -2975,7 +3014,7 @@ ${profile.phone}`,
               onClick={() =>
                 quickAskAgent(
                   "Check my candidate profile and tell me what resume details are missing or weak. Give exact improvements.",
-                  "response"
+                  "chat"
                 )
               }
               className="bg-white/10 hover:bg-white/20 py-3 rounded-2xl font-semibold"

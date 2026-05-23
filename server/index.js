@@ -35,9 +35,10 @@ const getMissingProfileFields = (profile = {}) => {
     .map(([, label]) => label)
 }
 
-const isResumeRequest = (message = "") => {
-  const text = message.toLowerCase()
-  return (
+const detectIntent = (message = "", documentType = "chat") => {
+  const text = String(message || "").toLowerCase()
+
+  const wantsResume =
     text.includes("resume") ||
     text.includes("cv") ||
     text.includes("add this in resume") ||
@@ -46,18 +47,63 @@ const isResumeRequest = (message = "") => {
     text.includes("update my resume") ||
     text.includes("improve my resume") ||
     text.includes("make my resume")
-  )
+
+  const wantsLetter =
+    text.includes("cover letter") ||
+    text.includes("application letter") ||
+    text.includes("job email") ||
+    text.includes("email for job") ||
+    text.includes("email for this job") ||
+    text.includes("mail for job") ||
+    text.includes("mail for this job") ||
+    text.includes("application email") ||
+    text.includes("apply email")
+
+  const wantsGuide =
+    text.includes("roadmap") ||
+    text.includes("interview") ||
+    text.includes("prepare") ||
+    text.includes("improve my skills") ||
+    text.includes("skill improvement") ||
+    text.includes("learning plan")
+
+  if (documentType === "resume" || wantsResume) {
+    return {
+      docType: "resume",
+      exportable: true,
+      title: "Professional Resume",
+      intent: "resume",
+    }
+  }
+
+  if (documentType === "letter" || wantsLetter) {
+    return {
+      docType: "letter",
+      exportable: true,
+      title: "Application Letter",
+      intent: "letter",
+    }
+  }
+
+  if (documentType === "guide" || wantsGuide) {
+    return {
+      docType: "guide",
+      exportable: true,
+      title: "Career Guide",
+      intent: "guide",
+    }
+  }
+
+  return {
+    docType: "chat",
+    exportable: false,
+    title: "Chat Response",
+    intent: "chat",
+  }
 }
 
 const isApplicationEmailRequest = (message = "") => {
-  const text = message.toLowerCase()
-  return (
-    text.includes("application email") ||
-    text.includes("job email") ||
-    text.includes("email for this job") ||
-    text.includes("apply email") ||
-    text.includes("mail for this job")
-  )
+  return detectIntent(message, "chat").intent === "letter"
 }
 
 app.get("/", (req, res) => {
@@ -71,17 +117,20 @@ app.post("/agent", async (req, res) => {
   try {
     const {
       message,
-      profile,
+      profile = {},
       selectedJob,
-      savedApplications,
-      searchPreferences,
-      documentType,
+      savedApplications = [],
+      searchPreferences = {},
+      documentType = "chat",
     } = req.body
 
     if (!message) {
       return res.status(400).json({
         success: false,
         reply: "Please enter a message.",
+        docType: "chat",
+        exportable: false,
+        title: "Error",
       })
     }
 
@@ -89,133 +138,80 @@ app.post("/agent", async (req, res) => {
       return res.status(500).json({
         success: false,
         reply: "AI key is missing in backend environment.",
+        docType: "chat",
+        exportable: false,
+        title: "AI Setup Error",
       })
     }
 
+    const detected = detectIntent(message, documentType)
     const missingFields = getMissingProfileFields(profile)
 
-    const messageLower = message.toLowerCase()
-
-    const userWantsCompleteResume =
-      isResumeRequest(message) &&
-      !messageLower.includes("only project section") &&
-      !messageLower.includes("only summary") &&
-      !messageLower.includes("only skills")
-
-    if (userWantsCompleteResume && missingFields.length > 0) {
+    if (detected.intent === "letter" && !selectedJob) {
       return res.json({
         success: true,
-        reply: `Some details are missing, but I will still create a clean resume using only the available information.
+        reply: `I can write a professional job application email, but first select a job.
 
-Missing details you can improve later:
-${missingFields.map((field) => `- ${field}`).join("\n")}
-
-Now here is a clean resume using the details currently available:
-
-${profile?.name || ""}
-${profile?.phone || ""}${profile?.email ? " | " + profile.email : ""}
-${profile?.linkedin || ""}${profile?.github ? " | " + profile.github : ""}
-${profile?.location || ""}
-
-PROFESSIONAL SUMMARY
-${profile?.summary || `Motivated ${profile?.role || "candidate"} with practical skills in ${profile?.skills || profile?.technicalSkills || "software development"} and a strong interest in building real-world projects and growing professionally.`}
-
-TECHNICAL SKILLS
-${profile?.skills || profile?.technicalSkills || ""}
-
-PROJECTS
-${profile?.projects || "Add your project details in the profile section to make this stronger."}
-
-EDUCATION
-${profile?.education || ""}
-
-STRENGTHS
-${profile?.softSkills || "Quick learner, problem solving, teamwork, communication"}
-
-DECLARATION
-I hereby declare that the above information is true to the best of my knowledge.
-
-Best regards,
-${profile?.name || ""}`,
-      })
-    }
-
-    if (isApplicationEmailRequest(message) && !selectedJob) {
-      return res.json({
-        success: true,
-        reply: `I can generate a professional job application email, but first select a job.
-
-Please do this:
-
-1. Go to Find Real Jobs
-2. Click Apply AI on any job
-3. Then ask me: "Generate email for this job"`,
+Go to Find Real Jobs, click Apply AI on a job, then ask me to generate the email for that selected job.`,
+        docType: "chat",
+        exportable: false,
+        title: "Select a Job First",
       })
     }
 
     const systemPrompt = `
-You are JobPilot AI, a professional AI career agent.
+You are JobPilot AI, a helpful career assistant inside a job application web app.
 
-Your job is to help users with:
-- Resume generation
-- Resume improvement
-- Cover letters
-- Job application emails
-- Interview preparation
-- Skill improvement plans
-- Career roadmaps
-- Project descriptions
-- Job search strategy
+Your job is to respond like ChatGPT: understand the user's real intention, answer naturally, and only create export-ready documents when the user clearly asks for a resume, letter, email, roadmap, interview prep, or other long document.
 
-IMPORTANT BEHAVIOR RULES:
+CURRENT INTENT:
+- intent: ${detected.intent}
+- docType: ${detected.docType}
+- exportable: ${detected.exportable}
 
-1. Understand user intent like ChatGPT.
-2. Do not answer too literally if the user's meaning is clear.
-3. If the user asks something related to resume/CV, always think:
-   "Should this become a complete resume or a resume section?"
-4. If user says:
-   - "write about my project and add it in resume"
-   - "describe my project for resume"
-   - "add this project in my resume"
-   Then create a COMPLETE resume and include the improved project inside the PROJECTS section.
-5. Do NOT create only a project document unless the user clearly says:
-   - "only write project section"
-   - "only project description"
-6. Never repeat the same section twice.
-7. Never repeat greetings, signatures, or contact details.
-8. Never print "Not provided" in resume output.
-9. If a field is missing, skip it quietly.
-10. Never invent fake degree, fake experience, fake company, fake certification, or fake salary.
-11. Improve wording professionally but stay truthful.
-12. Use clean, job-ready formatting.
-13. If user asks for resume, make it ATS-friendly and complete.
-14. If user asks for email, write one short professional email only.
-15. If user asks for cover letter, write one clean cover letter only.
-16. If user asks for skill improvement, give a practical step-by-step roadmap.
-17. If user asks for interview prep, give questions, sample answers, and practice advice.
-18. If user asks for code, use markdown code blocks.
-19. If salary data is missing, say salary is not listed. Do not invent salary.
+CRITICAL RULES:
+1. Normal small questions must be answered like chat. Do not create a big document for casual questions.
+2. If user asks "describe my strength", answer with a clean useful sentence or short paragraph, not a resume export.
+3. If user asks for resume/CV or says "add this in resume", produce a COMPLETE resume, not only one project section.
+4. If user asks to improve/write a project and add it in resume, create the complete resume and include the improved project inside PROJECTS.
+5. If user clearly asks only for a project description/section, then write only that section.
+6. Never print "Not provided" in resume output. Skip empty fields.
+7. Never invent fake degree, fake company, fake certification, fake job experience, fake salary, or fake links.
+8. Never repeat the same section twice.
+9. Never repeat greetings/signatures/contact details.
+10. Use strong professional wording, but keep it truthful.
+11. If code is requested, use markdown code blocks.
+12. For application emails, write one short professional email only.
+13. For interview prep, give questions, sample answers, and practice tips.
+14. For skill roadmap, give a practical step-by-step plan.
+15. If salary is missing from a job, say salary is not listed. Do not invent salary.
+
+RESPONSE STYLE:
+- Be clear and useful.
+- Avoid unnecessary headings for small chat answers.
+- Use headings only when helpful.
+- For resumes, use clean ATS-friendly headings.
+- For emails/letters, do not over-explain; just give the usable content.
 
 RESUME FORMAT WHEN RESUME IS REQUESTED:
-
 ${profile?.name || ""}
 ${profile?.phone || ""}${profile?.email ? " | " + profile.email : ""}
 ${profile?.linkedin || ""}${profile?.github ? " | " + profile.github : ""}
 ${profile?.location || ""}
 
 PROFESSIONAL SUMMARY
-Write a strong 3-4 line summary using only real available details.
+3-4 lines using only available details.
 
 TECHNICAL SKILLS
 Group skills clearly.
 
 PROJECTS
-For every project:
+For every available project:
 Project Name
 - Strong bullet point
 - Strong bullet point
 - Strong bullet point
-- Impact / outcome if available
+- Impact/outcome if available
 
 EDUCATION
 Use only available education details.
@@ -230,7 +226,7 @@ STRENGTHS
 Use available soft skills.
 
 DECLARATION
-Include only if suitable for Indian fresher resume.
+Include only if suitable for an Indian fresher resume.
 
 USER PROFILE:
 Name: ${profile?.name || ""}
@@ -252,6 +248,9 @@ Certifications: ${profile?.certificationsText || ""}
 Achievements: ${profile?.achievementsText || ""}
 Languages: ${profile?.languagesText || ""}
 
+MISSING PROFILE FIELDS:
+${missingFields.length ? missingFields.join(", ") : "None"}
+
 SELECTED JOB:
 Title: ${selectedJob?.title || ""}
 Company: ${selectedJob?.company || ""}
@@ -266,7 +265,6 @@ Country: ${searchPreferences?.country || ""}
 Experience: ${searchPreferences?.experience || ""}
 Salary Range: ${searchPreferences?.salaryRange || ""}
 
-Document Type Requested By Frontend: ${documentType || "response"}
 Saved Applications Count: ${savedApplications?.length || 0}
 `
 
@@ -282,8 +280,8 @@ Saved Applications Count: ${savedApplications?.length || 0}
           content: message,
         },
       ],
-      temperature: 0.45,
-      max_tokens: 2200,
+      temperature: detected.intent === "chat" ? 0.65 : 0.35,
+      max_tokens: detected.intent === "chat" ? 900 : 2600,
     })
 
     const reply =
@@ -293,6 +291,9 @@ Saved Applications Count: ${savedApplications?.length || 0}
     res.json({
       success: true,
       reply,
+      docType: detected.docType,
+      exportable: detected.exportable,
+      title: detected.title,
     })
   } catch (error) {
     console.error("AGENT ERROR:")
@@ -302,6 +303,9 @@ Saved Applications Count: ${savedApplications?.length || 0}
       success: false,
       reply: "AI agent failed. Please check backend logs.",
       error: error.message,
+      docType: "chat",
+      exportable: false,
+      title: "AI Error",
     })
   }
 })
