@@ -40,7 +40,11 @@ const isResumeRequest = (message = "") => {
   return (
     text.includes("resume") ||
     text.includes("cv") ||
-    text.includes("generate my resume") ||
+    text.includes("add this in resume") ||
+    text.includes("add that in resume") ||
+    text.includes("put this in resume") ||
+    text.includes("update my resume") ||
+    text.includes("improve my resume") ||
     text.includes("make my resume")
   )
 }
@@ -65,8 +69,14 @@ app.get("/", (req, res) => {
 
 app.post("/agent", async (req, res) => {
   try {
-    const { message, profile, selectedJob, savedApplications, searchPreferences } =
-      req.body
+    const {
+      message,
+      profile,
+      selectedJob,
+      savedApplications,
+      searchPreferences,
+      documentType,
+    } = req.body
 
     if (!message) {
       return res.status(400).json({
@@ -84,16 +94,49 @@ app.post("/agent", async (req, res) => {
 
     const missingFields = getMissingProfileFields(profile)
 
-    if (isResumeRequest(message) && missingFields.length > 0) {
+    const messageLower = message.toLowerCase()
+
+    const userWantsCompleteResume =
+      isResumeRequest(message) &&
+      !messageLower.includes("only project section") &&
+      !messageLower.includes("only summary") &&
+      !messageLower.includes("only skills")
+
+    if (userWantsCompleteResume && missingFields.length > 0) {
       return res.json({
         success: true,
-        reply: `I can generate a professional resume, but I need a few details first.
+        reply: `Some details are missing, but I will still create a clean resume using only the available information.
 
-Please complete these fields in the Profile section:
-
+Missing details you can improve later:
 ${missingFields.map((field) => `- ${field}`).join("\n")}
 
-After filling them, ask me again: "Generate my resume".`,
+Now here is a clean resume using the details currently available:
+
+${profile?.name || ""}
+${profile?.phone || ""}${profile?.email ? " | " + profile.email : ""}
+${profile?.linkedin || ""}${profile?.github ? " | " + profile.github : ""}
+${profile?.location || ""}
+
+PROFESSIONAL SUMMARY
+${profile?.summary || `Motivated ${profile?.role || "candidate"} with practical skills in ${profile?.skills || profile?.technicalSkills || "software development"} and a strong interest in building real-world projects and growing professionally.`}
+
+TECHNICAL SKILLS
+${profile?.skills || profile?.technicalSkills || ""}
+
+PROJECTS
+${profile?.projects || "Add your project details in the profile section to make this stronger."}
+
+EDUCATION
+${profile?.education || ""}
+
+STRENGTHS
+${profile?.softSkills || "Quick learner, problem solving, teamwork, communication"}
+
+DECLARATION
+I hereby declare that the above information is true to the best of my knowledge.
+
+Best regards,
+${profile?.name || ""}`,
       })
     }
 
@@ -121,47 +164,109 @@ Your job is to help users with:
 - Interview preparation
 - Skill improvement plans
 - Career roadmaps
-- Project ideas
+- Project descriptions
 - Job search strategy
 
-Important behavior rules:
-1. Be personal and practical.
-2. Do not give generic low-quality answers.
-3. Use the user's profile details when available.
-4. If the user asks for resume/application but profile details are missing, ask them to complete the profile.
-5. If generating a resume, make it clean, ATS-friendly, and professional.
-6. If generating an email, make it short, clear, human, and not repetitive.
-7. If giving a skill plan, make it step-by-step and realistic.
-8. If preparing interviews, include questions, strong answers, and practice advice.
-9. Do not claim fake experience.
-10. Improve the wording professionally, but stay truthful to the user's details.
-11. Use simple formatting with clear headings.
-12. If salary data is not available in a job, say salary is not listed. Do not invent salary.
+IMPORTANT BEHAVIOR RULES:
 
-User Profile:
-Name: ${profile?.name || "Not provided"}
-Target Role: ${profile?.role || "Not provided"}
-Email: ${profile?.email || "Not provided"}
-Phone: ${profile?.phone || "Not provided"}
-Portfolio/GitHub: ${profile?.portfolio || "Not provided"}
-Skills: ${profile?.skills || profile?.technicalSkills || "Not provided"}
-Experience: ${profile?.experience || "Not provided"}
-Projects: ${profile?.projects || "Not provided"}
+1. Understand user intent like ChatGPT.
+2. Do not answer too literally if the user's meaning is clear.
+3. If the user asks something related to resume/CV, always think:
+   "Should this become a complete resume or a resume section?"
+4. If user says:
+   - "write about my project and add it in resume"
+   - "describe my project for resume"
+   - "add this project in my resume"
+   Then create a COMPLETE resume and include the improved project inside the PROJECTS section.
+5. Do NOT create only a project document unless the user clearly says:
+   - "only write project section"
+   - "only project description"
+6. Never repeat the same section twice.
+7. Never repeat greetings, signatures, or contact details.
+8. Never print "Not provided" in resume output.
+9. If a field is missing, skip it quietly.
+10. Never invent fake degree, fake experience, fake company, fake certification, or fake salary.
+11. Improve wording professionally but stay truthful.
+12. Use clean, job-ready formatting.
+13. If user asks for resume, make it ATS-friendly and complete.
+14. If user asks for email, write one short professional email only.
+15. If user asks for cover letter, write one clean cover letter only.
+16. If user asks for skill improvement, give a practical step-by-step roadmap.
+17. If user asks for interview prep, give questions, sample answers, and practice advice.
+18. If user asks for code, use markdown code blocks.
+19. If salary data is missing, say salary is not listed. Do not invent salary.
 
-Selected Job:
-Title: ${selectedJob?.title || "No selected job"}
-Company: ${selectedJob?.company || "No selected company"}
-Location: ${selectedJob?.location || "No selected location"}
-Salary: ${selectedJob?.salary || "Not listed"}
-Description: ${selectedJob?.description || "No job description available"}
+RESUME FORMAT WHEN RESUME IS REQUESTED:
 
-Search Preferences:
-Role: ${searchPreferences?.role || "Not provided"}
-Location: ${searchPreferences?.location || "Not provided"}
-Country: ${searchPreferences?.country || "Not provided"}
-Experience: ${searchPreferences?.experience || "Not provided"}
-Salary Range: ${searchPreferences?.salaryRange || "Not provided"}
+${profile?.name || ""}
+${profile?.phone || ""}${profile?.email ? " | " + profile.email : ""}
+${profile?.linkedin || ""}${profile?.github ? " | " + profile.github : ""}
+${profile?.location || ""}
 
+PROFESSIONAL SUMMARY
+Write a strong 3-4 line summary using only real available details.
+
+TECHNICAL SKILLS
+Group skills clearly.
+
+PROJECTS
+For every project:
+Project Name
+- Strong bullet point
+- Strong bullet point
+- Strong bullet point
+- Impact / outcome if available
+
+EDUCATION
+Use only available education details.
+
+EXPERIENCE
+Use only real experience, internship, freelance, or project experience.
+
+CERTIFICATIONS
+Use only available certifications.
+
+STRENGTHS
+Use available soft skills.
+
+DECLARATION
+Include only if suitable for Indian fresher resume.
+
+USER PROFILE:
+Name: ${profile?.name || ""}
+Target Role: ${profile?.role || ""}
+Email: ${profile?.email || ""}
+Phone: ${profile?.phone || ""}
+Location: ${profile?.location || ""}
+LinkedIn: ${profile?.linkedin || ""}
+GitHub: ${profile?.github || ""}
+Portfolio: ${profile?.portfolio || ""}
+Summary: ${profile?.summary || ""}
+Technical Skills: ${profile?.technicalSkills || profile?.skills || ""}
+Soft Skills: ${profile?.softSkills || ""}
+Tools: ${profile?.tools || ""}
+Education: ${profile?.education || ""}
+Experience: ${profile?.experience || ""}
+Projects: ${profile?.projects || ""}
+Certifications: ${profile?.certificationsText || ""}
+Achievements: ${profile?.achievementsText || ""}
+Languages: ${profile?.languagesText || ""}
+
+SELECTED JOB:
+Title: ${selectedJob?.title || ""}
+Company: ${selectedJob?.company || ""}
+Location: ${selectedJob?.location || ""}
+Salary: ${selectedJob?.salary || ""}
+Description: ${selectedJob?.description || ""}
+
+SEARCH PREFERENCES:
+Role: ${searchPreferences?.role || ""}
+Location: ${searchPreferences?.location || ""}
+Country: ${searchPreferences?.country || ""}
+Experience: ${searchPreferences?.experience || ""}
+Salary Range: ${searchPreferences?.salaryRange || ""}
+
+Document Type Requested By Frontend: ${documentType || "response"}
 Saved Applications Count: ${savedApplications?.length || 0}
 `
 
@@ -177,8 +282,8 @@ Saved Applications Count: ${savedApplications?.length || 0}
           content: message,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 1600,
+      temperature: 0.45,
+      max_tokens: 2200,
     })
 
     const reply =
@@ -190,7 +295,7 @@ Saved Applications Count: ${savedApplications?.length || 0}
       reply,
     })
   } catch (error) {
-    console.error("❌ AGENT ERROR:")
+    console.error("AGENT ERROR:")
     console.error(error)
 
     res.status(500).json({
@@ -230,8 +335,8 @@ app.post("/chat", async (req, res) => {
           content: message,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 800,
+      temperature: 0.6,
+      max_tokens: 1000,
     })
 
     const reply =
@@ -240,7 +345,7 @@ app.post("/chat", async (req, res) => {
 
     res.json({ reply })
   } catch (error) {
-    console.error("❌ CHAT ERROR:")
+    console.error("CHAT ERROR:")
     console.error(error)
 
     res.status(500).json({
@@ -267,18 +372,25 @@ app.get("/jobs", async (req, res) => {
     }
 
     const allowedCountries = [
-      "in",
-      "us",
-      "gb",
-      "ca",
       "au",
-      "de",
-      "fr",
-      "nz",
-      "za",
-      "br",
-      "pl",
       "at",
+      "be",
+      "br",
+      "ca",
+      "fr",
+      "de",
+      "in",
+      "it",
+      "mx",
+      "nl",
+      "nz",
+      "pl",
+      "sg",
+      "za",
+      "es",
+      "ch",
+      "gb",
+      "us",
     ]
 
     const safeCountry = allowedCountries.includes(country) ? country : "in"
@@ -306,7 +418,7 @@ app.get("/jobs", async (req, res) => {
     const data = await response.json()
 
     if (!response.ok) {
-      console.error("❌ ADZUNA ERROR:")
+      console.error("ADZUNA ERROR:")
       console.error(data)
 
       return res.status(response.status).json({
@@ -377,7 +489,7 @@ app.get("/jobs", async (req, res) => {
       jobs,
     })
   } catch (error) {
-    console.error("❌ JOBS ERROR:")
+    console.error("JOBS ERROR:")
     console.error(error)
 
     res.status(500).json({
@@ -417,7 +529,7 @@ app.post("/send-email", async (req, res) => {
     })
 
     if (error) {
-      console.error("❌ RESEND ERROR:")
+      console.error("RESEND ERROR:")
       console.error(error)
 
       return res.status(500).json({
@@ -433,7 +545,7 @@ app.post("/send-email", async (req, res) => {
       id: data?.id,
     })
   } catch (error) {
-    console.error("❌ EMAIL SEND ERROR:")
+    console.error("EMAIL SEND ERROR:")
     console.error(error)
 
     res.status(500).json({

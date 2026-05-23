@@ -390,8 +390,8 @@ function markdownToProfessionalHtml(text) {
 }
 
 function buildCleanResumeHtml(profile) {
-  const hasValue = (value) => value && String(value).trim().length > 0
-  const clean = (value) => escapeHtml(String(value || "").trim())
+  const clean = (value, fallback = "Not provided") =>
+    escapeHtml(value && String(value).trim() ? value : fallback)
 
   const splitList = (value) =>
     String(value || "")
@@ -401,243 +401,166 @@ function buildCleanResumeHtml(profile) {
 
   const bulletList = (items) => {
     const cleanItems = items.filter(Boolean)
-    if (cleanItems.length === 0) return ""
-    return `<ul>${cleanItems.map((item) => `<li>${clean(item)}</li>`).join("")}</ul>`
+    if (cleanItems.length === 0) return `<li>Not provided</li>`
+    return cleanItems.map((item) => `<li>${clean(item)}</li>`).join("")
   }
-
-  const contactParts = []
-  if (hasValue(profile?.phone)) contactParts.push(`Phone: ${clean(profile.phone)}`)
-  if (hasValue(profile?.email)) contactParts.push(`Email: ${clean(profile.email)}`)
-
-  const linkParts = []
-  if (hasValue(profile?.linkedin)) linkParts.push(`LinkedIn: ${clean(profile.linkedin)}`)
-  if (hasValue(profile?.github)) linkParts.push(`GitHub: ${clean(profile.github)}`)
-  if (hasValue(profile?.portfolio)) linkParts.push(`Portfolio: ${clean(profile.portfolio)}`)
 
   const skills = splitList(profile?.technicalSkills)
   const tools = splitList(profile?.tools)
   const strengths = splitList(profile?.softSkills)
+  const projects = Array.isArray(profile?.projects) ? profile.projects : []
+  const educations = Array.isArray(profile?.educations) ? profile.educations : []
+  const certifications = Array.isArray(profile?.certifications) ? profile.certifications : []
+  const languages = Array.isArray(profile?.languages) ? profile.languages : []
 
-  const projects = Array.isArray(profile?.projects)
-    ? profile.projects.filter(
-        (project) => hasValue(project.name) || hasValue(project.description)
-      )
-    : []
+  const projectHtml =
+    projects.filter((project) => project.name || project.description).length > 0
+      ? projects
+          .filter((project) => project.name || project.description)
+          .map(
+            (project) => `
+              <div class="resume-item">
+                <div class="resume-item-title">${clean(project.name, "Project")}</div>
+                ${
+                  project.tech
+                    ? `<div class="resume-item-sub">Tech Stack: ${clean(project.tech)}</div>`
+                    : ""
+                }
+                <ul>
+                  ${
+                    project.description
+                      ? `<li>${clean(project.description)}</li>`
+                      : "<li>Project details not provided</li>"
+                  }
+                  ${project.link ? `<li>Link: ${clean(project.link)}</li>` : ""}
+                </ul>
+              </div>
+            `
+          )
+          .join("")
+      : `<ul><li>Projects not provided</li></ul>`
 
-  const educations = Array.isArray(profile?.educations)
-    ? profile.educations.filter(
-        (edu) => hasValue(edu.degree) || hasValue(edu.college)
-      )
-    : []
+  const educationHtml =
+    educations.filter((edu) => edu.degree || edu.college).length > 0
+      ? educations
+          .filter((edu) => edu.degree || edu.college)
+          .map(
+            (edu) => `
+              <div class="resume-item">
+                <div class="resume-item-title">${clean(edu.degree, "Education")}</div>
+                <div class="resume-item-sub">${clean(edu.college, "College not provided")}</div>
+                <div class="resume-item-meta">
+                  ${edu.branch ? `Course/Branch: ${clean(edu.branch)} | ` : ""}
+                  ${edu.year ? `Year: ${clean(edu.year)} | ` : ""}
+                  ${edu.score ? `Score: ${clean(edu.score)}` : ""}
+                </div>
+              </div>
+            `
+          )
+          .join("")
+      : `<div class="resume-item"><div class="resume-item-title">Education not provided</div></div>`
 
-  const certifications = Array.isArray(profile?.certifications)
-    ? profile.certifications.filter((cert) => hasValue(cert.name))
-    : []
-
-  const achievements = Array.isArray(profile?.achievements)
-    ? profile.achievements.filter(
-        (ach) => hasValue(ach.title) || hasValue(ach.description)
-      )
-    : []
-
-  const languages = Array.isArray(profile?.languages)
-    ? profile.languages.filter((lang) => hasValue(lang.name))
-    : []
-
-  const projectHtml = projects
-    .map(
-      (project) => `
-        <div class="resume-item">
-          ${hasValue(project.name) ? `<div class="resume-item-title">${clean(project.name)}</div>` : ""}
-          ${hasValue(project.tech) ? `<div class="resume-item-sub">Tech Stack: ${clean(project.tech)}</div>` : ""}
-          ${
-            hasValue(project.description) || hasValue(project.link)
-              ? `<ul>
-                  ${hasValue(project.description) ? `<li>${clean(project.description)}</li>` : ""}
-                  ${hasValue(project.link) ? `<li>Link: ${clean(project.link)}</li>` : ""}
-                </ul>`
-              : ""
-          }
-        </div>
-      `
-    )
-    .join("")
-
-  const educationHtml = educations
-    .map(
-      (edu) => `
-        <div class="resume-item">
-          ${hasValue(edu.degree) ? `<div class="resume-item-title">${clean(edu.degree)}</div>` : ""}
-          ${hasValue(edu.college) ? `<div class="resume-item-sub">${clean(edu.college)}</div>` : ""}
-          ${
-            hasValue(edu.branch) || hasValue(edu.year) || hasValue(edu.score)
-              ? `<div class="resume-item-meta">
-                  ${hasValue(edu.branch) ? `Course/Branch: ${clean(edu.branch)}` : ""}
-                  ${hasValue(edu.branch) && (hasValue(edu.year) || hasValue(edu.score)) ? " | " : ""}
-                  ${hasValue(edu.year) ? `Year: ${clean(edu.year)}` : ""}
-                  ${hasValue(edu.year) && hasValue(edu.score) ? " | " : ""}
-                  ${hasValue(edu.score) ? `Score: ${clean(edu.score)}` : ""}
-                </div>`
-              : ""
-          }
-        </div>
-      `
-    )
-    .join("")
-
-  const certificationHtml = certifications.length
-    ? `<ul>
-        ${certifications
+  const certificationHtml =
+    certifications.filter((cert) => cert.name).length > 0
+      ? `<ul>${certifications
+          .filter((cert) => cert.name)
           .map(
             (cert) =>
-              `<li>
-                ${clean(cert.name)}
-                ${hasValue(cert.issuer) ? ` - ${clean(cert.issuer)}` : ""}
-                ${hasValue(cert.year) ? ` (${clean(cert.year)})` : ""}
-                ${hasValue(cert.link) ? ` - ${clean(cert.link)}` : ""}
-              </li>`
+              `<li>${clean(cert.name)}${cert.issuer ? ` - ${clean(cert.issuer)}` : ""}${
+                cert.year ? ` (${clean(cert.year)})` : ""
+              }</li>`
           )
-          .join("")}
-      </ul>`
-    : ""
+          .join("")}</ul>`
+      : `<ul><li>Not provided</li></ul>`
 
-  const achievementHtml = achievements.length
-    ? `<ul>
-        ${achievements
-          .map(
-            (ach) =>
-              `<li>
-                ${hasValue(ach.title) ? `<strong>${clean(ach.title)}</strong>` : ""}
-                ${hasValue(ach.title) && hasValue(ach.description) ? " - " : ""}
-                ${hasValue(ach.description) ? clean(ach.description) : ""}
-              </li>`
-          )
-          .join("")}
-      </ul>`
-    : ""
-
-  const languageHtml = languages.length
-    ? `<ul>
-        ${languages
+  const languageHtml =
+    languages.filter((lang) => lang.name).length > 0
+      ? `<ul>${languages
+          .filter((lang) => lang.name)
           .map(
             (lang) =>
-              `<li>
-                ${clean(lang.name)}
-                ${hasValue(lang.level) ? ` - ${clean(lang.level)}` : ""}
-              </li>`
+              `<li>${clean(lang.name)}${lang.level ? ` - ${clean(lang.level)}` : ""}</li>`
           )
-          .join("")}
-      </ul>`
-    : ""
+          .join("")}</ul>`
+      : `<ul><li>Not provided</li></ul>`
 
   return `
     <div class="resume-header">
-      ${hasValue(profile?.name) ? `<h1>${clean(profile.name)}</h1>` : ""}
-      ${contactParts.length ? `<p>${contactParts.join(" | ")}</p>` : ""}
-      ${linkParts.length ? `<p>${linkParts.join(" | ")}</p>` : ""}
-      ${hasValue(profile?.location) ? `<p>Location: ${clean(profile.location)}</p>` : ""}
+      <h1>${clean(profile?.name, "YOUR NAME")}</h1>
+      <p>Phone: ${clean(profile?.phone, "+91 XXXXX XXXXX")} | Email: ${clean(
+        profile?.email,
+        "yourmail@gmail.com"
+      )}</p>
+      <p>LinkedIn: ${clean(profile?.linkedin, "linkedin.com/in/yourname")} | GitHub: ${clean(
+        profile?.github,
+        "github.com/yourname"
+      )}</p>
+      <p>Location: ${clean(profile?.location, "City, State, India")}</p>
     </div>
 
-    ${
-      hasValue(profile?.summary)
-        ? `<section>
-            <h2>Professional Summary</h2>
-            <p>${clean(profile.summary)}</p>
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Professional Summary</h2>
+      <p>${clean(
+        profile?.summary,
+        "Motivated and detail-oriented candidate with strong technical knowledge, project experience, and a strong interest in growing professionally."
+      )}</p>
+    </section>
 
-    ${
-      skills.length
-        ? `<section>
-            <h2>Technical Skills</h2>
-            ${bulletList(skills)}
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Technical Skills</h2>
+      <ul>${bulletList(skills)}</ul>
+    </section>
 
-    ${
-      tools.length || strengths.length
-        ? `<section>
-            <h2>Tools & Other Skills</h2>
-            ${bulletList([...tools, ...strengths])}
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Tools & Other Skills</h2>
+      <ul>${bulletList([...tools, ...strengths])}</ul>
+    </section>
 
-    ${
-      projects.length
-        ? `<section>
-            <h2>Projects</h2>
-            ${projectHtml}
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Projects</h2>
+      ${projectHtml}
+    </section>
 
-    ${
-      educations.length
-        ? `<section>
-            <h2>Education</h2>
-            ${educationHtml}
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Education</h2>
+      ${educationHtml}
+    </section>
 
-    ${
-      certifications.length
-        ? `<section>
-            <h2>Certifications</h2>
-            ${certificationHtml}
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Certifications</h2>
+      ${certificationHtml}
+    </section>
 
-    ${
-      achievements.length
-        ? `<section>
-            <h2>Achievements</h2>
-            ${achievementHtml}
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Languages</h2>
+      ${languageHtml}
+    </section>
 
-    ${
-      languages.length
-        ? `<section>
-            <h2>Languages</h2>
-            ${languageHtml}
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Strengths</h2>
+      <ul>
+        ${bulletList(
+          strengths.length > 0
+            ? strengths
+            : ["Quick Learner", "Problem Solving", "Team Collaboration", "Good Communication", "Time Management"]
+        )}
+      </ul>
+    </section>
 
-    ${
-      strengths.length
-        ? `<section>
-            <h2>Strengths</h2>
-            ${bulletList(strengths)}
-          </section>`
-        : ""
-    }
-
-    ${
-      hasValue(profile?.name)
-        ? `<section>
-            <h2>Declaration</h2>
-            <p>I hereby declare that the above information is true to the best of my knowledge.</p>
-
-            <div class="declaration-grid">
-              <div>
-                ${hasValue(profile?.location) ? `<p><strong>Place:</strong> ${clean(profile.location)}</p>` : ""}
-                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-              </div>
-              <div>
-                <p><strong>Signature:</strong></p>
-                <p>${clean(profile.name)}</p>
-              </div>
-            </div>
-          </section>`
-        : ""
-    }
+    <section>
+      <h2>Declaration</h2>
+      <p>I hereby declare that the above information is true to the best of my knowledge.</p>
+      <div class="declaration-grid">
+        <div>
+          <p><strong>Place:</strong> ${clean(profile?.location, "Your City")}</p>
+          <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+        </div>
+        <div>
+          <p><strong>Signature:</strong></p>
+          <p>${clean(profile?.name, "Your Name")}</p>
+        </div>
+      </div>
+    </section>
   `
 }
 
@@ -650,34 +573,10 @@ function getProfessionalDocumentHtml(
   const title = getDocumentTitle(text, profile, documentType)
   const isResume = documentType === "resume"
   const isLetter = documentType === "letter"
-
   const resumeBody = buildCleanResumeHtml(profile)
   const normalBody = markdownToProfessionalHtml(text)
 
-  const cleanName = escapeHtml(profile?.name || "Candidate")
-  const cleanRole = escapeHtml(profile?.role || "Career Document")
-  const cleanEmail = escapeHtml(profile?.email || "")
-  const cleanPhone = escapeHtml(profile?.phone || "")
-  const cleanLocation = escapeHtml(profile?.location || "")
-
-  const documentLabel = isResume
-    ? "Professional Resume"
-    : isLetter
-    ? "Application Letter"
-    : "JobPilot AI Document"
-
-  const contentBody = isResume
-    ? resumeBody
-    : `
-      <section>
-        <h2>${escapeHtml(documentLabel)}</h2>
-        <div class="ai-document-body">
-          <p>${normalBody}</p>
-        </div>
-      </section>
-    `
-
-  if (template === "modern-sidebar") {
+  if (template === "modern-sidebar" && isResume) {
     return `
 <!DOCTYPE html>
 <html>
@@ -690,64 +589,52 @@ function getProfessionalDocumentHtml(
     .sidebar{background:#e5e7eb;padding:32px 24px;border-right:1px solid #cbd5e1}
     .main{padding:32px 42px}
     .side-name{font-size:24px;font-weight:800;text-transform:uppercase;color:#334155;line-height:1.1;margin-bottom:8px}
-    .side-role{font-size:13px;color:#475569;text-transform:uppercase;margin-bottom:20px;letter-spacing:.8px}
+    .side-role{font-size:13px;color:#475569;text-transform:uppercase;margin-bottom:20px}
     .side-block{margin-top:18px}
     .side-title{font-size:13px;color:#334155;font-weight:800;text-transform:uppercase;border-bottom:2px solid #64748b;padding-bottom:5px;margin-bottom:8px}
-    .side-text{font-size:12px;line-height:1.55;word-break:break-word;color:#1f2937;margin-bottom:5px}
+    .side-text{font-size:12px;line-height:1.55;word-break:break-word;color:#1f2937}
     .resume-header{display:none}
-    section{margin-top:0;margin-bottom:16px}
+    section{margin-top:0;margin-bottom:14px}
     h2{font-size:15px;color:#334155;text-transform:uppercase;border-bottom:2px solid #64748b;padding-bottom:6px;margin:18px 0 9px;letter-spacing:.8px}
-    h3{font-size:14px;margin:12px 0 6px;color:#111827}
-    p,li{font-size:12.8px;line-height:1.6;margin:0 0 7px}
+    p,li{font-size:12.5px;line-height:1.5;margin:0 0 6px}
     ul{margin:0;padding-left:18px}
-    li{margin-bottom:4px}
-    .resume-item{margin-bottom:11px}
+    .resume-item{margin-bottom:10px}
     .resume-item-title{font-size:13px;font-weight:700;color:#111827;margin-bottom:2px}
     .resume-item-sub,.resume-item-meta{font-size:12px;color:#4b5563;margin-bottom:2px}
     .declaration-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:12px}
     .declaration-grid div:last-child{text-align:right}
-    strong{color:#111827}
     @media print{body{background:white}.page{margin:0;max-width:none;box-shadow:none}.no-print{display:none!important}}
   </style>
 </head>
 <body>
   <div class="page">
     <aside class="sidebar">
-      <div class="side-name">${cleanName}</div>
-      <div class="side-role">${cleanRole}</div>
-
-      <div class="side-block">
-        <div class="side-title">Document</div>
-        <div class="side-text">${escapeHtml(documentLabel)}</div>
-        <div class="side-text">${new Date().toLocaleDateString()}</div>
-      </div>
-
+      <div class="side-name">${escapeHtml(profile?.name || "YOUR NAME")}</div>
+      <div class="side-role">${escapeHtml(profile?.role || "Target Role")}</div>
       <div class="side-block">
         <div class="side-title">Contact</div>
-        ${cleanEmail ? `<div class="side-text">${cleanEmail}</div>` : ""}
-        ${cleanPhone ? `<div class="side-text">${cleanPhone}</div>` : ""}
-        ${cleanLocation ? `<div class="side-text">${cleanLocation}</div>` : ""}
+        <div class="side-text">${escapeHtml(profile?.phone || "Phone not provided")}</div>
+        <div class="side-text">${escapeHtml(profile?.email || "Email not provided")}</div>
+        <div class="side-text">${escapeHtml(profile?.location || "Location not provided")}</div>
+        <div class="side-text">${escapeHtml(profile?.github || "GitHub not provided")}</div>
+        <div class="side-text">${escapeHtml(profile?.portfolio || "Portfolio not provided")}</div>
       </div>
-
-      ${
-        profile?.technicalSkills
-          ? `<div class="side-block">
-              <div class="side-title">Skills</div>
-              <div class="side-text">${escapeHtml(profile.technicalSkills)}</div>
-            </div>`
-          : ""
-      }
+      <div class="side-block">
+        <div class="side-title">Skills</div>
+        <div class="side-text">${escapeHtml(profile?.technicalSkills || "Not provided")}</div>
+      </div>
+      <div class="side-block">
+        <div class="side-title">Tools</div>
+        <div class="side-text">${escapeHtml(profile?.tools || "Not provided")}</div>
+      </div>
     </aside>
-
-    <main class="main">
-      ${contentBody}
-    </main>
+    <main class="main">${resumeBody}</main>
   </div>
 </body>
 </html>`
   }
 
-  if (template === "elegant-minimal") {
+  if (template === "elegant-minimal" && isResume) {
     return `
 <!DOCTYPE html>
 <html>
@@ -757,43 +644,86 @@ function getProfessionalDocumentHtml(
   <style>
     body{margin:0;background:#f8fafc;font-family:Georgia,"Times New Roman",serif;color:#222}
     .page{max-width:860px;margin:24px auto;background:white;padding:46px 58px;border-radius:12px;box-shadow:0 18px 45px rgba(0,0,0,.1)}
-    .resume-header,.doc-header{text-align:center;border-bottom:3px solid #222;padding-bottom:14px;margin-bottom:18px}
-    .resume-header h1,.doc-header h1{font-family:Arial,Helvetica,sans-serif;margin:0 0 8px;font-size:29px;letter-spacing:4px;text-transform:uppercase;color:#111}
-    .resume-header p,.doc-header p{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#4b5563;margin:3px 0;line-height:1.4}
+    .resume-header{text-align:center;border-bottom:3px solid #222;padding-bottom:14px;margin-bottom:18px}
+    .resume-header h1{font-family:Arial,Helvetica,sans-serif;margin:0 0 8px;font-size:29px;letter-spacing:4px;text-transform:uppercase;color:#111}
+    .resume-header p{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#4b5563;margin:3px 0;line-height:1.4}
     section{margin-top:14px}
     h2{font-family:Arial,Helvetica,sans-serif;font-size:14px;letter-spacing:3px;text-transform:uppercase;margin:18px 0 9px;color:#111;border-bottom:1px solid #111;padding-bottom:5px}
-    h3{font-family:Arial,Helvetica,sans-serif;font-size:13px;margin:10px 0 4px}
-    p,li{font-size:12.8px;line-height:1.62;margin:0 0 7px}
+    p,li{font-size:12.8px;line-height:1.55;margin:0 0 6px}
     ul{margin:0;padding-left:18px}
-    li{margin-bottom:4px}
     .resume-item{margin-bottom:10px}
     .resume-item-title{font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;color:#111;margin-bottom:2px}
     .resume-item-sub,.resume-item-meta{font-size:12px;color:#4b5563;margin-bottom:2px}
     .declaration-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:12px}
     .declaration-grid div:last-child{text-align:right}
-    strong{color:#111}
     @media print{body{background:white}.page{margin:0;max-width:none;box-shadow:none;border-radius:0}.no-print{display:none!important}}
   </style>
 </head>
 <body>
+  <div class="page">${resumeBody}</div>
+</body>
+</html>`
+  }
+
+  if (isLetter) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body{margin:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#111827}
+    .page{max-width:800px;margin:24px auto;background:white;padding:46px 56px;box-shadow:0 18px 45px rgba(15,23,42,.14)}
+    .letter-header{text-align:left;border-bottom:3px solid #1f4e79;padding-bottom:14px;margin-bottom:24px}
+    .letter-header h1{margin:0 0 6px;font-size:25px;color:#1f4e79;text-transform:uppercase}
+    .letter-header p{font-size:12.5px;color:#374151;margin:3px 0}
+    .letter-body p{font-size:13.5px;line-height:1.75;margin:0 0 13px}
+    h2,h3{color:#1f4e79}
+    @media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;padding:36px 44px}.no-print{display:none!important}}
+  </style>
+</head>
+<body>
   <div class="page">
-    ${
-      isResume
-        ? contentBody
-        : `
-          <div class="doc-header">
-            <h1>${cleanName}</h1>
-            <p>${escapeHtml(documentLabel)}</p>
-            <p>
-              ${cleanEmail ? cleanEmail : ""}
-              ${cleanEmail && cleanPhone ? " | " : ""}
-              ${cleanPhone ? cleanPhone : ""}
-            </p>
-            ${cleanLocation ? `<p>${cleanLocation}</p>` : ""}
-          </div>
-          ${contentBody}
-        `
-    }
+    <div class="letter-header">
+      <h1>${escapeHtml(profile?.name || "Candidate Name")}</h1>
+      <p>${escapeHtml(profile?.email || "Email not provided")} | ${escapeHtml(profile?.phone || "Phone not provided")}</p>
+      <p>${escapeHtml(profile?.location || "Location not provided")}</p>
+    </div>
+    <div class="letter-body"><p>${normalBody}</p></div>
+  </div>
+</body>
+</html>`
+  }
+
+  if (!isResume) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>${escapeHtml(title)}</title>
+  <style>
+    body{margin:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#111827}
+    .page{max-width:850px;margin:24px auto;background:white;padding:42px 50px;border-radius:14px;box-shadow:0 18px 45px rgba(15,23,42,.14)}
+    .doc-header{border-bottom:3px solid #7c3aed;padding-bottom:12px;margin-bottom:22px}
+    .doc-header h1{font-size:26px;margin:0;color:#111827}
+    .doc-header p{font-size:12px;color:#6b7280;margin:5px 0 0}
+    h2{font-size:17px;color:#111827;margin:22px 0 10px;border-bottom:1px solid #e5e7eb;padding-bottom:6px}
+    h3{font-size:15px;color:#111827;margin:16px 0 8px}
+    p,li{font-size:13.5px;line-height:1.68;margin:0 0 10px}
+    ul{margin:0 0 12px;padding-left:20px}
+    li{margin-bottom:5px}
+    @media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;border-radius:0;padding:34px 42px}.no-print{display:none!important}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="doc-header">
+      <h1>JobPilot AI Response</h1>
+      <p>Generated career guidance</p>
+    </div>
+    <p>${normalBody}</p>
   </div>
 </body>
 </html>`
@@ -808,45 +738,25 @@ function getProfessionalDocumentHtml(
   <style>
     body{margin:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#111827}
     .page{max-width:850px;margin:24px auto;background:white;padding:38px 48px;box-shadow:0 18px 45px rgba(15,23,42,.14)}
-    .resume-header,.doc-header{text-align:center;padding-bottom:14px;border-bottom:3px solid #1f4e79;margin-bottom:18px}
-    .resume-header h1,.doc-header h1{margin:0 0 8px;font-size:28px;letter-spacing:1px;color:#1f4e79;text-transform:uppercase;font-weight:800}
-    .resume-header p,.doc-header p{margin:3px 0;font-size:12.5px;line-height:1.4;color:#374151}
+    .resume-header{text-align:center;padding-bottom:14px;border-bottom:3px solid #1f4e79;margin-bottom:18px}
+    .resume-header h1{margin:0 0 8px;font-size:28px;letter-spacing:1px;color:#1f4e79;text-transform:uppercase;font-weight:800}
+    .resume-header p{margin:3px 0;font-size:12.5px;line-height:1.4}
     section{margin-top:15px}
     h2{font-size:14px;color:#1f4e79;text-transform:uppercase;border-bottom:1.8px solid #1f4e79;padding-bottom:5px;margin:18px 0 9px;letter-spacing:.4px}
-    h3{font-size:14px;margin:12px 0 6px;color:#111827}
-    p{font-size:12.8px;line-height:1.62;margin:0 0 8px}
+    p{font-size:12.5px;line-height:1.55;margin:0 0 7px}
     ul{margin:0;padding-left:18px}
-    li{font-size:12.8px;line-height:1.55;margin-bottom:4px}
+    li{font-size:12.5px;line-height:1.5;margin-bottom:3px}
     .resume-item{margin-bottom:10px}
     .resume-item-title{font-size:13px;font-weight:700;color:#111827;margin-bottom:2px}
     .resume-item-sub{font-size:12.3px;color:#374151;margin-bottom:2px}
     .resume-item-meta{font-size:12px;color:#4b5563;margin-bottom:3px}
     .declaration-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:14px}
     .declaration-grid div:last-child{text-align:right}
-    strong{color:#111827}
     @media print{body{background:white}.page{box-shadow:none;margin:0;max-width:none;padding:28px 36px}.no-print{display:none!important}}
   </style>
 </head>
 <body>
-  <div class="page">
-    ${
-      isResume
-        ? contentBody
-        : `
-          <div class="doc-header">
-            <h1>${cleanName}</h1>
-            <p>${escapeHtml(documentLabel)}</p>
-            <p>
-              ${cleanEmail ? cleanEmail : ""}
-              ${cleanEmail && cleanPhone ? " | " : ""}
-              ${cleanPhone ? cleanPhone : ""}
-            </p>
-            ${cleanLocation ? `<p>${cleanLocation}</p>` : ""}
-          </div>
-          ${contentBody}
-        `
-    }
-  </div>
+  <div class="page">${resumeBody}</div>
 </body>
 </html>`
 }
@@ -1029,10 +939,9 @@ function TemplateSelector({ selectedResumeTemplate, setSelectedResumeTemplate })
     <div className="mb-4 bg-black/20 border border-white/10 rounded-2xl p-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
         <div>
-          <h3 className="text-lg font-bold">Choose Export Template</h3>
+          <h3 className="text-lg font-bold">Choose Resume Template</h3>
           <p className="text-sm text-gray-400">
-            Templates apply to resume, cover letter, interview prep, skill roadmap,
-            and all exported AI documents.
+            Templates only apply when exporting resume documents.
           </p>
         </div>
 
@@ -1933,40 +1842,9 @@ ${profile.phone}`,
     }, 15)
   }
 
-  const detectSmartDocType = (cleanMessage, defaultType) => {
-    const lowerMessage = cleanMessage.toLowerCase()
-
-    if (
-      lowerMessage.includes("resume") ||
-      lowerMessage.includes("cv") ||
-      lowerMessage.includes("add this in resume") ||
-      lowerMessage.includes("add that in resume") ||
-      lowerMessage.includes("put this in resume") ||
-      lowerMessage.includes("update my resume") ||
-      lowerMessage.includes("improve my resume") ||
-      lowerMessage.includes("make my resume")
-    ) {
-      return "resume"
-    }
-
-    if (
-      lowerMessage.includes("cover letter") ||
-      lowerMessage.includes("application letter") ||
-      lowerMessage.includes("job email") ||
-      lowerMessage.includes("email for job") ||
-      lowerMessage.includes("mail for job")
-    ) {
-      return "letter"
-    }
-
-    return defaultType
-  }
-
   const askAgent = async (messageText, documentType = "response") => {
     const cleanMessage = messageText.trim()
     if (!cleanMessage) return
-
-    const smartDocType = detectSmartDocType(cleanMessage, documentType)
 
     setAiMessages((prev) => [
       ...prev,
@@ -2004,7 +1882,7 @@ ${profile.phone}`,
             salaryRange: search.salaryRange,
             salaryPreference: getSalaryRangeText(search.salaryRange),
           },
-          documentType: smartDocType,
+          documentType,
         }),
       })
 
@@ -2022,7 +1900,7 @@ ${profile.phone}`,
       }
 
       setAiLoading(false)
-      typeAiResponse(data.reply, smartDocType)
+      typeAiResponse(data.reply, documentType)
     } catch (error) {
       console.error("AI agent frontend error:", error)
       setAiLoading(false)
@@ -2299,7 +2177,7 @@ ${profile.phone}`,
                 color="purple"
                 onClick={() =>
                   quickAskAgent(
-                    "Generate a complete professional ATS-friendly resume using all available candidate profile details. Do not show missing fields. Do not write 'Not provided'. If a detail is empty, skip it. Include only clean filled sections: Professional Summary, Technical Skills, Projects, Education, Certifications, Strengths, and Declaration if suitable. Make it job-ready and truthful.",
+                    "Generate a professional resume only. Use this exact structure: PROFESSIONAL SUMMARY, TECHNICAL SKILLS, PROJECTS, EDUCATION, CERTIFICATIONS, STRENGTHS, DECLARATION. Use only the candidate profile details. Do not add fake details. Keep it clean, direct, and job-ready.",
                     "resume"
                   )
                 }
@@ -2987,7 +2865,7 @@ ${profile.phone}`,
               type="button"
               onClick={() =>
                 quickAskAgent(
-                  "Generate a complete professional ATS-friendly resume using all available candidate profile details. Do not show missing fields. Do not write 'Not provided'. If a detail is empty, skip it. Include only clean filled sections: Professional Summary, Technical Skills, Projects, Education, Certifications, Strengths, and Declaration if suitable. Make it job-ready and truthful.",
+                  "Generate a professional resume only. Use this exact structure: PROFESSIONAL SUMMARY, TECHNICAL SKILLS, PROJECTS, EDUCATION, CERTIFICATIONS, STRENGTHS, DECLARATION. Use only the candidate profile details. Do not add fake details. Keep it clean, direct, and job-ready.",
                   "resume"
                 )
               }
