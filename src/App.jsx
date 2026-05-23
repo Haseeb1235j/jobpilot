@@ -86,7 +86,116 @@ const countryOptions = [
   { code: "br", name: "Brazil", currency: "BRL", label: "BRL / year" },
   { code: "pl", name: "Poland", currency: "PLN", label: "PLN / year" },
   { code: "at", name: "Austria", currency: "EUR", label: "EUR / year" },
+  { code: "be", name: "Belgium", currency: "EUR", label: "EUR / year" },
+  { code: "it", name: "Italy", currency: "EUR", label: "EUR / year" },
+  { code: "mx", name: "Mexico", currency: "MXN", label: "MXN / year" },
+  { code: "nl", name: "Netherlands", currency: "EUR", label: "EUR / year" },
+  { code: "sg", name: "Singapore", currency: "SGD", label: "SGD / year" },
+  { code: "es", name: "Spain", currency: "EUR", label: "EUR / year" },
+  { code: "ch", name: "Switzerland", currency: "CHF", label: "CHF / year" },
 ]
+
+const locationOptionsByCountry = {
+  in: [
+    "Hyderabad",
+    "Bangalore",
+    "Chennai",
+    "Pune",
+    "Mumbai",
+    "Delhi",
+    "Noida",
+    "Gurgaon",
+    "Kolkata",
+    "Ahmedabad",
+    "Kochi",
+    "Coimbatore",
+    "Jaipur",
+    "Indore",
+    "Lucknow",
+    "Chandigarh",
+    "Remote",
+    "Other",
+  ],
+  us: [
+    "New York",
+    "San Francisco",
+    "Los Angeles",
+    "Chicago",
+    "Seattle",
+    "Austin",
+    "Boston",
+    "Dallas",
+    "Atlanta",
+    "Denver",
+    "Remote",
+    "Other",
+  ],
+  gb: [
+    "London",
+    "Manchester",
+    "Birmingham",
+    "Leeds",
+    "Glasgow",
+    "Liverpool",
+    "Bristol",
+    "Edinburgh",
+    "Remote",
+    "Other",
+  ],
+  ca: [
+    "Toronto",
+    "Vancouver",
+    "Montreal",
+    "Calgary",
+    "Ottawa",
+    "Edmonton",
+    "Remote",
+    "Other",
+  ],
+  au: [
+    "Sydney",
+    "Melbourne",
+    "Brisbane",
+    "Perth",
+    "Adelaide",
+    "Canberra",
+    "Remote",
+    "Other",
+  ],
+  de: [
+    "Berlin",
+    "Munich",
+    "Hamburg",
+    "Frankfurt",
+    "Cologne",
+    "Stuttgart",
+    "Remote",
+    "Other",
+  ],
+  fr: [
+    "Paris",
+    "Lyon",
+    "Marseille",
+    "Toulouse",
+    "Nice",
+    "Nantes",
+    "Remote",
+    "Other",
+  ],
+  nz: ["Auckland", "Wellington", "Christchurch", "Hamilton", "Remote", "Other"],
+  za: ["Cape Town", "Johannesburg", "Durban", "Pretoria", "Remote", "Other"],
+  br: ["Sao Paulo", "Rio de Janeiro", "Brasilia", "Curitiba", "Remote", "Other"],
+  pl: ["Warsaw", "Krakow", "Wroclaw", "Gdansk", "Remote", "Other"],
+  at: ["Vienna", "Graz", "Linz", "Salzburg", "Remote", "Other"],
+  be: ["Brussels", "Antwerp", "Ghent", "Leuven", "Remote", "Other"],
+  it: ["Rome", "Milan", "Turin", "Naples", "Bologna", "Remote", "Other"],
+  mx: ["Mexico City", "Guadalajara", "Monterrey", "Puebla", "Remote", "Other"],
+  nl: ["Amsterdam", "Rotterdam", "Utrecht", "The Hague", "Remote", "Other"],
+  sg: ["Singapore", "Remote", "Other"],
+  es: ["Madrid", "Barcelona", "Valencia", "Seville", "Remote", "Other"],
+  ch: ["Zurich", "Geneva", "Basel", "Bern", "Lausanne", "Remote", "Other"],
+  default: ["Remote", "Hybrid", "Other"],
+}
 
 const salaryRanges = {
   in: [
@@ -502,7 +611,6 @@ function getProfessionalDocumentHtml(
     <aside class="sidebar">
       <div class="side-name">${escapeHtml(profile?.name || "YOUR NAME")}</div>
       <div class="side-role">${escapeHtml(profile?.role || "Target Role")}</div>
-
       <div class="side-block">
         <div class="side-title">Contact</div>
         <div class="side-text">${escapeHtml(profile?.phone || "Phone not provided")}</div>
@@ -511,18 +619,15 @@ function getProfessionalDocumentHtml(
         <div class="side-text">${escapeHtml(profile?.github || "GitHub not provided")}</div>
         <div class="side-text">${escapeHtml(profile?.portfolio || "Portfolio not provided")}</div>
       </div>
-
       <div class="side-block">
         <div class="side-title">Skills</div>
         <div class="side-text">${escapeHtml(profile?.technicalSkills || "Not provided")}</div>
       </div>
-
       <div class="side-block">
         <div class="side-title">Tools</div>
         <div class="side-text">${escapeHtml(profile?.tools || "Not provided")}</div>
       </div>
     </aside>
-
     <main class="main">${resumeBody}</main>
   </div>
 </body>
@@ -726,7 +831,7 @@ function AccordionCard({
       >
         <div>
           <div className="flex items-center gap-3">
-            <span className="text-xl">{isOpen ? "▾" : "▸"}</span>
+            <span className="text-xl">{isOpen ? "v" : ">"}</span>
             <h3 className="text-xl font-bold">{title}</h3>
             <span
               className={`text-xs px-3 py-1 rounded-full ${
@@ -862,7 +967,7 @@ function TemplateSelector({ selectedResumeTemplate, setSelectedResumeTemplate })
             <div className="flex items-center justify-between gap-2 mb-2">
               <p className="font-bold">{template.name}</p>
               {selectedResumeTemplate === template.id && (
-                <span className="text-green-300 text-sm">✓</span>
+                <span className="text-green-300 text-sm">Selected</span>
               )}
             </div>
 
@@ -924,80 +1029,185 @@ function TemplateSelector({ selectedResumeTemplate, setSelectedResumeTemplate })
   )
 }
 
-function JobRoleSelector({ value, onChange }) {
-  const [roleSearch, setRoleSearch] = useState(value || "")
-  const [showOtherInput, setShowOtherInput] = useState(false)
+function SearchableDropdown({
+  value,
+  onChange,
+  options,
+  placeholder,
+  otherPlaceholder,
+  inputClass,
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const [customMode, setCustomMode] = useState(false)
 
-  const filteredRoles = jobRoleOptions
-    .filter((role) => role.toLowerCase().includes(roleSearch.toLowerCase()))
-    .slice(0, 8)
+  const filteredOptions = options
+    .filter((option) => option.toLowerCase().includes(query.toLowerCase()))
+    .slice(0, 10)
 
-  const handleRoleSelect = (role) => {
-    if (role === "Other") {
-      setShowOtherInput(true)
-      setRoleSearch("")
+  const selectOption = (option) => {
+    if (option === "Other") {
+      setCustomMode(true)
+      setOpen(false)
+      setQuery("")
       onChange("")
       return
     }
 
-    setShowOtherInput(false)
-    setRoleSearch(role)
-    onChange(role)
+    setCustomMode(false)
+    setOpen(false)
+    setQuery("")
+    onChange(option)
   }
 
   return (
-    <div className="space-y-2 mt-2">
-      <input
-        value={roleSearch}
-        onChange={(e) => {
-          setRoleSearch(e.target.value)
-          setShowOtherInput(false)
-        }}
-        placeholder="Search role..."
-        className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-3 outline-none focus:border-blue-400 transition"
-      />
+    <div className="relative mt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-400 transition flex items-center justify-between gap-3 text-left min-h-[50px]"
+      >
+        <span className={value ? "text-white" : "text-gray-400"}>
+          {value || placeholder}
+        </span>
+        <span className="text-gray-400">v</span>
+      </button>
 
-      <div className="max-h-40 overflow-y-auto bg-black/20 border border-white/10 rounded-xl p-2 space-y-1">
-        {filteredRoles.length === 0 ? (
-          <button
-            type="button"
-            onClick={() => handleRoleSelect("Other")}
-            className="w-full text-left px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-sm font-semibold"
-          >
-            Other - type your own role
-          </button>
-        ) : (
-          filteredRoles.map((role) => (
-            <button
-              type="button"
-              key={role}
-              onClick={() => handleRoleSelect(role)}
-              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
-                value === role
-                  ? "bg-blue-600 text-white"
-                  : "bg-white/5 hover:bg-white/10 text-gray-200"
-              }`}
-            >
-              {role}
-            </button>
-          ))
-        )}
-      </div>
+      {open && (
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-[#0b1020] border border-white/10 rounded-2xl p-3 shadow-2xl">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Type to search..."
+            className="w-full bg-black/30 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-400 transition mb-2"
+            autoFocus
+          />
 
-      {showOtherInput && (
+          <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+            {filteredOptions.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => selectOption("Other")}
+                className="w-full text-left px-3 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-sm font-semibold"
+              >
+                Other - type manually
+              </button>
+            ) : (
+              filteredOptions.map((option) => (
+                <button
+                  type="button"
+                  key={option}
+                  onClick={() => selectOption(option)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
+                    value === option
+                      ? "bg-blue-600 text-white"
+                      : "bg-white/5 hover:bg-white/10 text-gray-200"
+                  }`}
+                >
+                  {option}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {customMode && (
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Type custom job role"
-          className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-3 outline-none focus:border-blue-400 transition"
+          placeholder={otherPlaceholder}
+          className={inputClass}
           autoFocus
         />
       )}
+    </div>
+  )
+}
 
-      {value && (
-        <p className="text-xs text-green-300 truncate">
-          Selected: <span className="font-semibold">{value}</span>
-        </p>
+function JobRoleSelector({ value, onChange, inputClass }) {
+  return (
+    <SearchableDropdown
+      value={value}
+      onChange={onChange}
+      options={jobRoleOptions}
+      placeholder="Select job role"
+      otherPlaceholder="Type your custom job role"
+      inputClass={inputClass}
+    />
+  )
+}
+
+function LocationSelector({ value, onChange, country, inputClass }) {
+  const options = locationOptionsByCountry[country] || locationOptionsByCountry.default
+
+  return (
+    <SearchableDropdown
+      value={value}
+      onChange={onChange}
+      options={options}
+      placeholder="Select city"
+      otherPlaceholder="Type city or Remote"
+      inputClass={inputClass}
+    />
+  )
+}
+
+function CountrySelector({ value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+
+  const selectedCountry =
+    countryOptions.find((country) => country.code === value) || countryOptions[0]
+
+  const filteredCountries = countryOptions
+    .filter((country) =>
+      country.name.toLowerCase().includes(query.toLowerCase())
+    )
+    .slice(0, 10)
+
+  return (
+    <div className="relative mt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="w-full bg-black/30 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-400 transition flex items-center justify-between gap-3 text-left min-h-[50px]"
+      >
+        <span className="text-white">{selectedCountry.name}</span>
+        <span className="text-gray-400">v</span>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 top-full mt-2 z-50 bg-[#0b1020] border border-white/10 rounded-2xl p-3 shadow-2xl">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search country..."
+            className="w-full bg-black/30 border border-white/10 rounded-xl p-3 outline-none focus:border-blue-400 transition mb-2"
+            autoFocus
+          />
+
+          <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+            {filteredCountries.map((country) => (
+              <button
+                type="button"
+                key={country.code}
+                onClick={() => {
+                  setOpen(false)
+                  setQuery("")
+                  onChange(country.code)
+                }}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
+                  value === country.code
+                    ? "bg-blue-600 text-white"
+                    : "bg-white/5 hover:bg-white/10 text-gray-200"
+                }`}
+              >
+                {country.name}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   )
@@ -2209,7 +2419,7 @@ ${profile.phone}`,
         />
 
         <div className="grid lg:grid-cols-6 gap-4 mb-6 items-start">
-          <SearchBox label="Select Job Role">
+          <SearchBox label="Job Role">
             <JobRoleSelector
               value={search.role}
               onChange={(role) =>
@@ -2218,40 +2428,39 @@ ${profile.phone}`,
                   role,
                 }))
               }
+              inputClass={inputClass}
             />
           </SearchBox>
 
           <SearchBox label="Country">
-            <select
+            <CountrySelector
               value={search.country}
-              onChange={(e) => {
-                const nextCountry = e.target.value
+              onChange={(nextCountry) => {
                 const nextRanges = salaryRanges[nextCountry] || salaryRanges.default
+                const nextLocations =
+                  locationOptionsByCountry[nextCountry] || locationOptionsByCountry.default
 
                 setSearch((prev) => ({
                   ...prev,
                   country: nextCountry,
+                  location: nextLocations[0],
                   salaryRange: nextRanges[0].label,
                 }))
               }}
-              className={inputClass}
-            >
-              {countryOptions.map((country) => (
-                <option key={country.code} value={country.code}>
-                  {country.name}
-                </option>
-              ))}
-            </select>
+            />
           </SearchBox>
 
-          <SearchBox label="Location">
-            <input
+          <SearchBox label="City / Location">
+            <LocationSelector
               value={search.location}
-              onChange={(e) =>
-                setSearch((prev) => ({ ...prev, location: e.target.value }))
+              country={search.country}
+              onChange={(location) =>
+                setSearch((prev) => ({
+                  ...prev,
+                  location,
+                }))
               }
-              placeholder="City or Remote"
-              className={inputClass}
+              inputClass={inputClass}
             />
           </SearchBox>
 
