@@ -583,6 +583,34 @@ const mobileUiStyles = `
   .auth-mobile-title{font-size:34px!important;line-height:1.05!important;}
   .jobpilot-mobile-tabs button{padding:10px 14px!important;font-size:12px!important;}
 }
+
+
+/* Phase 9 mobile layout hard-fix */
+@media (max-width: 900px){
+  html, body, #root { width:100%!important; max-width:100%!important; overflow-x:hidden!important; }
+  .jobpilot-mobile-shell{ min-height:100dvh!important; width:100%!important; overflow-x:hidden!important; padding:10px 10px 98px!important; }
+  .desktop-only-sidebar{ display:none!important; }
+  .jobpilot-account-bar{ position:sticky!important; top:0!important; left:auto!important; right:auto!important; width:100%!important; margin:0 0 10px!important; z-index:80!important; display:flex!important; gap:8px!important; flex-wrap:wrap!important; }
+  .jobpilot-account-bar *{ max-width:100%!important; }
+  .jobpilot-account-spacer{ display:none!important; }
+  .jobpilot-mobile-tabs{ display:flex!important; width:100%!important; overflow-x:auto!important; gap:8px!important; padding:10px!important; border-radius:20px!important; margin-bottom:10px!important; }
+  .jobpilot-mobile-tabs button{ flex:0 0 auto!important; min-height:42px!important; white-space:nowrap!important; }
+  .mobile-stack-grid{ display:flex!important; flex-direction:column!important; width:100%!important; max-width:100%!important; padding:0!important; gap:12px!important; }
+  .mobile-card-tight, .mobile-stack-grid > *{ width:100%!important; max-width:100%!important; min-width:0!important; box-sizing:border-box!important; }
+  .mobile-action-grid{ display:grid!important; grid-template-columns:1fr 1fr!important; gap:8px!important; width:100%!important; }
+  .mobile-action-grid > *{ width:100%!important; min-width:0!important; }
+  input, textarea, select{ width:100%!important; max-width:100%!important; min-width:0!important; box-sizing:border-box!important; font-size:16px!important; }
+  button{ min-height:42px!important; touch-action:manipulation!important; }
+  .resume-mobile-shell{ width:100%!important; max-width:100%!important; overflow-x:auto!important; -webkit-overflow-scrolling:touch!important; border-radius:20px!important; padding:10px!important; box-sizing:border-box!important; }
+  .resume-mobile-shell .resume-page{ transform:none!important; transform-origin:top left!important; min-width:794px!important; width:794px!important; }
+  .resume-mobile-shell::before{ content:'Resume preview is A4 size. Swipe left/right to view it.'!important; display:block!important; margin:0 0 10px!important; padding:9px 10px!important; border-radius:14px!important; text-align:center!important; color:#bfdbfe!important; background:rgba(37,99,235,.14)!important; border:1px solid rgba(96,165,250,.25)!important; font-size:11px!important; font-weight:900!important; }
+  .jobpilot-mobile-bottom-nav{ display:grid!important; grid-template-columns:repeat(4,1fr)!important; position:fixed!important; left:8px!important; right:8px!important; bottom:calc(8px + env(safe-area-inset-bottom,0px))!important; z-index:99999!important; background:rgba(2,6,23,.96)!important; border:1px solid rgba(255,255,255,.14)!important; border-radius:20px!important; padding:7px!important; gap:5px!important; box-shadow:0 18px 55px rgba(0,0,0,.55)!important; backdrop-filter:blur(18px)!important; }
+  .jobpilot-mobile-bottom-nav button{ display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:center!important; gap:2px!important; border:0!important; background:transparent!important; color:#94a3b8!important; border-radius:15px!important; padding:7px 3px!important; font-size:10px!important; font-weight:900!important; min-height:46px!important; }
+  .jobpilot-mobile-bottom-nav button.active{ background:linear-gradient(135deg,#2563eb,#7c3aed)!important; color:white!important; }
+}
+@media (min-width:901px){
+  .jobpilot-mobile-bottom-nav{ display:none!important; }
+}
 `
 
 function isFilledValue(value) {
