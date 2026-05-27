@@ -608,6 +608,37 @@ const mobileUiStyles = `
   .jobpilot-mobile-bottom-nav button{ display:flex!important; flex-direction:column!important; align-items:center!important; justify-content:center!important; gap:2px!important; border:0!important; background:transparent!important; color:#94a3b8!important; border-radius:15px!important; padding:7px 3px!important; font-size:10px!important; font-weight:900!important; min-height:46px!important; }
   .jobpilot-mobile-bottom-nav button.active{ background:linear-gradient(135deg,#2563eb,#7c3aed)!important; color:white!important; }
 }
+
+
+/* Phase 10 phone polish: app-like mobile layout */
+@media (max-width: 760px){
+  .jobpilot-root-layout{display:block!important;height:auto!important;min-height:100dvh!important;overflow:visible!important;padding:0!important;}
+  .jobpilot-mobile-shell{display:block!important;min-height:100dvh!important;height:auto!important;overflow:visible!important;padding:8px 8px 104px!important;}
+  .jobpilot-mobile-shell > div:not(.jobpilot-mobile-tabs){height:auto!important;min-height:auto!important;overflow:visible!important;}
+  .jobpilot-mobile-shell [class*="h-full"]{height:auto!important;min-height:auto!important;}
+  .jobpilot-mobile-shell [class*="overflow-y-auto"]{overflow:visible!important;}
+  .jobpilot-mobile-shell [class*="grid"]{max-width:100%!important;}
+  .jobpilot-mobile-shell .mobile-stack-grid{display:flex!important;flex-direction:column!important;}
+  .jobpilot-mobile-shell h1{font-size:24px!important;line-height:1.15!important;}
+  .jobpilot-mobile-shell h2{font-size:22px!important;line-height:1.2!important;}
+  .jobpilot-mobile-shell h3{font-size:18px!important;line-height:1.25!important;}
+  .jobpilot-mobile-shell p{font-size:14px!important;}
+  .jobpilot-mobile-shell .mobile-card-tight,
+  .jobpilot-mobile-shell [class*="rounded-3xl"],
+  .jobpilot-mobile-shell [class*="rounded-["]{border-radius:20px!important;}
+  .jobpilot-mobile-shell .mobile-action-grid,
+  .jobpilot-mobile-shell [class*="flex"][class*="gap-2"],
+  .jobpilot-mobile-shell [class*="flex"][class*="gap-3"]{flex-wrap:wrap!important;}
+  .jobpilot-mobile-shell button{white-space:normal!important;line-height:1.15!important;min-height:44px!important;}
+  .jobpilot-mobile-shell textarea{min-height:160px!important;}
+  .jobpilot-mobile-tabs{position:sticky!important;top:0!important;z-index:70!important;margin:0 0 8px!important;padding:8px!important;background:rgba(2,6,23,.96)!important;border:1px solid rgba(255,255,255,.10)!important;}
+  .jobpilot-account-bar{position:sticky!important;top:0!important;z-index:75!important;margin:0!important;border-radius:0 0 18px 18px!important;}
+  .resume-mobile-shell{margin:0!important;}
+  .resume-mobile-shell .resume-page{min-width:760px!important;width:760px!important;}
+  .jobpilot-mobile-bottom-nav{left:8px!important;right:8px!important;bottom:8px!important;border-radius:22px!important;}
+  .jobpilot-mobile-bottom-nav button{font-size:10px!important;min-height:48px!important;}
+}
+
 @media (min-width:901px){
   .jobpilot-mobile-bottom-nav{ display:none!important; }
 }
@@ -3501,6 +3532,7 @@ function Workspace({
   recipientEmail,
   setRecipientEmail,
   openGmail,
+  copyApplicationEmail,
   markApplied,
   clearWorkspace,
   applicationPack,
@@ -3543,9 +3575,17 @@ function Workspace({
           <div className="mt-3">
             <Field label="Body" textarea value={emailDraft?.body || ""} onChange={(v) => setEmailDraft((p) => ({ ...p, body: v }))} />
           </div>
-          <Button variant="primary" onClick={openGmail} className="mt-4 w-full">
-            Open in Gmail
-          </Button>
+          <div className="mt-4 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm font-bold text-amber-100">
+            ⚠️ Attach your resume manually before sending. Websites cannot attach your resume into Gmail/Outlook automatically.
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <Button variant="primary" onClick={openGmail} className="w-full">
+              Open Email App
+            </Button>
+            <Button onClick={copyApplicationEmail} className="w-full">
+              Copy Email
+            </Button>
+          </div>
         </Panel>
       </div>
 
@@ -5476,9 +5516,27 @@ const applyWithAI = (job) => {
     if (!selectedJob || !emailDraft) return alert("Select a job first.")
     if (!recipientEmail.trim()) return alert("Enter recipient email.")
 
-    const url = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipientEmail)}&su=${encodeURIComponent(emailDraft.subject)}&body=${encodeURIComponent(emailDraft.body)}`
-    window.open(url, "_blank")
-    notifyActivity("Gmail opened", "Your application email was prepared in Gmail.")
+    const warning =
+      "Important: your resume cannot be attached automatically from a website email link.\n\nBefore sending, please attach your resume PDF/DOC manually in your email app.\n\nContinue and open email app?"
+    if (!window.confirm(warning)) return
+
+    const bodyWithReminder = `${emailDraft.body}\n\n---\nReminder: Please attach your resume before sending this email.`
+    const mailtoUrl = `mailto:${encodeURIComponent(recipientEmail)}?subject=${encodeURIComponent(emailDraft.subject || "")}&body=${encodeURIComponent(bodyWithReminder)}`
+
+    window.location.href = mailtoUrl
+    notifyActivity("Email app opened", "Your email app was opened. Attach your resume manually before sending.")
+  }
+
+  const copyApplicationEmail = async () => {
+    if (!emailDraft) return alert("No email draft found.")
+    const text = `To: ${recipientEmail || "Add recruiter email"}\nSubject: ${emailDraft.subject || ""}\n\n${emailDraft.body || ""}\n\nReminder: Attach your resume before sending.`
+    try {
+      await navigator.clipboard.writeText(text)
+      notifyActivity("Email copied", "Application email copied. Paste it into Gmail/Outlook and attach your resume before sending.")
+      alert("Email copied. Now paste it into your mail app and attach your resume before sending.")
+    } catch {
+      alert(text)
+    }
   }
 
   const markApplied = () => {
@@ -5830,7 +5888,7 @@ const applyWithAI = (job) => {
       {focusMode ? (
         <div className="fixed inset-0 z-[99999] bg-[#050816] p-4">{studioContent}</div>
       ) : (
-        <div className="relative z-10 flex h-screen overflow-hidden">
+        <div className="jobpilot-root-layout relative z-10 flex h-screen overflow-hidden">
           <Sidebar
             section={section}
             setSection={setSection}
@@ -5897,6 +5955,7 @@ const applyWithAI = (job) => {
                 recipientEmail={recipientEmail}
                 setRecipientEmail={setRecipientEmail}
                 openGmail={openGmail}
+                copyApplicationEmail={copyApplicationEmail}
                 markApplied={markApplied}
                 clearWorkspace={clearWorkspace}
                 applicationPack={applicationPack}
