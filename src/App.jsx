@@ -1,7 +1,11 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000"
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
+    ? `http://${window.location.hostname}:5000`
+    : "http://localhost:5000")
 
 const uid = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`
 const today = () => new Date().toLocaleDateString()
@@ -51,6 +55,39 @@ function downloadBlob(content, type, filename) {
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
+}
+
+const DOCUMENT_ACCEPT = ".pdf,.doc,.docx,.txt,.csv,.json,.md,.png,.jpg,.jpeg,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+const ALLOWED_DOCUMENT_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt", ".csv", ".json", ".md", ".png", ".jpg", ".jpeg", ".webp"]
+const ALLOWED_DOCUMENT_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
+  "text/csv",
+  "application/json",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+]
+
+function validateDocumentFile(file, maxSizeMB = 10) {
+  if (!file) return "No file selected. Please choose your document again."
+
+  const fileName = String(file.name || "").toLowerCase()
+  const hasValidExtension = ALLOWED_DOCUMENT_EXTENSIONS.some((ext) => fileName.endsWith(ext))
+  const hasValidType = ALLOWED_DOCUMENT_TYPES.includes(file.type)
+
+  // Some Android/iPhone browsers return an empty file.type, so extension check is required.
+  if (!hasValidExtension && !hasValidType) {
+    return "Please upload only PDF, DOC, DOCX, TXT, CSV, JSON, MD, PNG, JPG, JPEG, or WEBP files."
+  }
+
+  if (file.size > maxSizeMB * 1024 * 1024) {
+    return `File is too large. Please upload a file under ${maxSizeMB} MB.`
+  }
+
+  return ""
 }
 
 const roleOptions = [
@@ -2108,7 +2145,7 @@ function ChatArea({
             </div>
             <label className="cursor-pointer rounded-2xl border border-blue-400/25 bg-blue-500/15 px-4 py-3 text-center text-sm font-black text-blue-100 transition hover:bg-blue-500/25">
               Upload Resume
-              <input type="file" accept=".pdf,.docx,.txt,.csv,.json,.md,.png,.jpg,.jpeg,.webp" onChange={uploadFile} className="hidden" />
+              <input type="file" accept={DOCUMENT_ACCEPT} onChange={uploadFile} className="sr-only" />
             </label>
             <Button onClick={autoFillDocument} disabled={!uploadedDocument} variant={uploadedDocument ? "primary" : "default"}>
               Auto-fill
@@ -2174,7 +2211,7 @@ function ChatArea({
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <label className="cursor-pointer rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-3 text-sm font-black text-white transition hover:bg-white/[0.1]">
                 Upload Document
-                <input type="file" accept=".pdf,.docx,.txt,.csv,.json,.md,.png,.jpg,.jpeg,.webp" onChange={uploadFile} className="hidden" />
+                <input type="file" accept={DOCUMENT_ACCEPT} onChange={uploadFile} className="sr-only" />
               </label>
               <Button onClick={autoFillDocument} disabled={!uploadedDocument} variant="primary">
                 Auto-fill Profile
@@ -2499,8 +2536,8 @@ function ResumeEditor({ resume, setResume, improveSection, scrollTarget, uploadS
       {label}
       <input
         type="file"
-        accept=".pdf,.docx,.txt,.csv,.json,.md,.png,.jpg,.jpeg,.webp"
-        className="hidden"
+        accept={DOCUMENT_ACCEPT}
+        className="sr-only"
         onChange={(e) => uploadSectionFile?.(e, section)}
       />
     </label>
@@ -5113,7 +5150,13 @@ export default function App() {
 
   const uploadFile = async (e) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    const validationError = validateDocumentFile(file)
+
+    if (validationError) {
+      addMessage("ai", validationError)
+      if (e.target) e.target.value = ""
+      return
+    }
 
     const form = new FormData()
     form.append("document", file)
@@ -5141,7 +5184,7 @@ export default function App() {
       notifyActivity("Resume uploaded and auto-filled", `I read ${data.fileName}, extracted ${data.chars} characters, and filled the details I could find.`)
       addMessage("ai", `Uploaded ${data.fileName}. I extracted ${data.chars} characters and auto-filled your profile/resume where possible. You can still click Auto-fill again if you want to retry.`)
     } catch {
-      addMessage("ai", "Upload failed. Make sure the backend is online, then try a PDF/DOCX/TXT resume with readable text.")
+      addMessage("ai", "Upload failed. Make sure the backend is online, then try a PDF/DOC/DOCX/TXT resume with readable text.")
     } finally {
       setAiLoading(false)
       e.target.value = ""
@@ -5150,7 +5193,13 @@ export default function App() {
 
   const uploadSectionFile = async (e, sectionName = "profile") => {
     const file = e.target.files?.[0]
-    if (!file) return
+    const validationError = validateDocumentFile(file)
+
+    if (validationError) {
+      addMessage("ai", validationError)
+      if (e.target) e.target.value = ""
+      return
+    }
 
     const form = new FormData()
     form.append("document", file)
@@ -5178,7 +5227,7 @@ export default function App() {
       })
       addMessage("ai", `Done. I extracted ${data.chars} characters from ${data.fileName} and updated your ${sectionName} details where possible.`)
     } catch {
-      addMessage("ai", "Upload failed. Make sure the backend is online, then try a PDF/DOCX/TXT resume with readable text.")
+      addMessage("ai", "Upload failed. Make sure the backend is online, then try a PDF/DOC/DOCX/TXT resume with readable text.")
     } finally {
       setAiLoading(false)
       e.target.value = ""
